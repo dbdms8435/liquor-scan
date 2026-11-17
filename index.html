@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17251F">
+<title>Liquor Scan</title>
+<style>
+:root {
+  --bg: #EEF3EF; --surface: #FFFFFF; --ink: #1E1E1E; --muted: #56655C; --line: #D3DDD6;
+  --brand: #2E7D5B; --brand-ink: #FFFFFF; --out: #17251F; --out-ink: #FFFFFF;
+  --ok-bg: #DCEFE5; --ok-ink: #1D5A40; --amber-bg: #F6E3BF; --amber-ink: #6E4700;
+  --red-bg: #F4C7C3; --red-ink: #7A2414; --radius: 14px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1813; --surface: #17251F; --ink: #E6EEE9; --muted: #A2B4A9; --line: #2B3D34;
+    --brand: #3E9E73; --out: #E6EEE9; --out-ink: #0E1813;
+    --ok-bg: #173A2A; --ok-ink: #A9DDC3; --amber-bg: #4A3610; --amber-ink: #F7D894;
+    --red-bg: #4B1F16; --red-ink: #F6B7A9;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+
+.top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px 8px 16px; padding-top: max(8px, env(safe-area-inset-top)); background: #17251F; color: #fff; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; margin-right: auto; }
+.badge { border: 0; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 700; }
+.badge.demo { background: #F6E3BF; color: #5A3A00; }
+.badge.sheet { background: #A7D3BE; color: #0F3B28; }
+.icon-btn { border: 0; background: transparent; color: #fff; width: 44px; height: 44px; border-radius: 10px;
+  display: grid; place-items: center; }
+
+main { max-width: 560px; margin: 0 auto; padding: 12px 16px 40px; display: flex; flex-direction: column; gap: 12px; }
+
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--surface);
+  border: 1px solid var(--line); padding: 5px; border-radius: var(--radius); }
+.seg button { border: 0; background: transparent; border-radius: 10px; padding: 9px 6px; font-weight: 800;
+  font-size: 17px; display: flex; flex-direction: column; align-items: center; line-height: 1.2; }
+.seg button small { font-weight: 500; font-size: 13px; color: var(--muted); }
+.seg button.in[aria-selected="true"] { background: var(--brand); color: var(--brand-ink); }
+.seg button.out[aria-selected="true"] { background: var(--out); color: var(--out-ink); }
+.seg button[aria-selected="true"] small { color: inherit; opacity: .85; }
+
+.cam { position: relative; background: #000; border-radius: var(--radius); overflow: hidden;
+  min-height: 210px; border: 3px solid var(--out); }
+body.in .cam { border-color: var(--brand); }
+#reader { width: 100%; }
+#reader video { display: block; width: 100% !important; height: auto; }
+.cam-tag { position: absolute; left: 10px; top: 10px; z-index: 3; background: rgba(0,0,0,.62); color: #fff;
+  font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+.cam-idle { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 10px; padding: 16px; text-align: center; background: #17251F; color: #E6EEE9; }
+.cam-idle p { margin: 0; font-size: 14px; color: #C3D3C9; max-width: 32ch; }
+.cam-idle p.bad { color: #F6B7A9; }
+
+.primary { border: 0; background: var(--brand); color: var(--brand-ink); font-weight: 700; border-radius: 12px;
+  padding: 12px 18px; min-height: 48px; }
+.primary:disabled { opacity: .6; }
+.ghost { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 14px; min-height: 48px; }
+.manual { display: flex; gap: 8px; }
+.manual input { flex: 1; min-width: 0; }
+input[type="text"], input[type="url"], input[type="number"], input[type="date"], select {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 12px; min-height: 48px; width: 100%; }
+input:disabled { opacity: .5; }
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; min-height: 96px; }
+#card { scroll-margin-top: calc(72px + env(safe-area-inset-top)); }
+.card.idle { display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); }
+.card.idle p { margin: 0; max-width: 34ch; }
+.card.ok { background: var(--ok-bg); color: var(--ok-ink); border-color: transparent; }
+.card.warn { background: var(--amber-bg); color: var(--amber-ink); border-color: transparent; }
+.card.bad { background: var(--red-bg); color: var(--red-ink); border-color: transparent; }
+.res { display: flex; align-items: center; gap: 14px; }
+.delta { flex: none; font-size: 40px; font-weight: 800; line-height: 1; min-width: 2.4ch; text-align: center; font-variant-numeric: tabular-nums; }
+.res .name { font-size: 19px; font-weight: 700; }
+.res .sub { font-size: 15px; }
+.note { margin: 10px 0 0; font-weight: 700; font-size: 15px; }
+.card .msg { margin: 0 0 10px; font-weight: 600; }
+
+.form { display: flex; flex-direction: column; gap: 8px; }
+.form h3 { margin: 0; font-size: 20px; }
+.form .meta { color: var(--muted); font-size: 14px; margin: -4px 0 4px; }
+.form label { font-weight: 700; font-size: 14px; margin-top: 4px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.two > div { display: flex; flex-direction: column; gap: 4px; }
+.stepper { display: grid; grid-template-columns: 52px 1fr 52px; gap: 6px; }
+.stepper button { border: 1px solid var(--line); background: var(--bg); border-radius: 12px; font-size: 24px; font-weight: 700; }
+.stepper input { text-align: center; font-size: 20px; font-weight: 800; }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.presets button { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 6px 14px; min-height: 38px; }
+.check { display: flex; align-items: center; gap: 8px; font-weight: 500 !important; margin-top: 0 !important; }
+.check input { width: 22px; height: 22px; accent-color: var(--brand); }
+.err { margin: 0; color: var(--red-ink); background: var(--red-bg); border-radius: 10px; padding: 8px 10px; font-size: 14px; font-weight: 600; }
+.row { display: flex; gap: 8px; margin-top: 6px; }
+.row .primary { flex: 1; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 2px 14px 6px; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; }
+.panel h2 { font-size: 15px; margin: 0; color: var(--muted); }
+.panel-head .ghost { min-height: 36px; padding: 4px 12px; font-size: 14px; }
+.list { list-style: none; margin: 0; padding: 0; }
+.list li { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); align-items: center; }
+.list .pn { grid-column: 1; font-weight: 600; }
+.list .ty { font-weight: 400; color: var(--muted); font-size: 13px; margin-left: 4px; }
+.list .chips { grid-column: 1; display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.list .chips:empty { display: none; }
+.list .num { grid-column: 2; grid-row: 1 / span 2; font-size: 22px; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+.list .num small { display: block; font-size: 11px; font-weight: 600; color: var(--muted); }
+.list .empty { display: block; color: var(--muted); font-size: 14px; }
+.chip { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 8px; }
+.chip.red { background: var(--red-bg); color: var(--red-ink); }
+.chip.amber { background: var(--amber-bg); color: var(--amber-ink); }
+.chip.green { background: var(--ok-bg); color: var(--ok-ink); }
+.list li.flash { animation: flash 1.6s ease-out; }
+@keyframes flash { from { background: var(--amber-bg); } to { background: transparent; } }
+
+dialog { border: 0; border-radius: 18px; padding: 18px; width: min(520px, calc(100vw - 32px)); background: var(--surface); color: var(--ink); }
+dialog::backdrop { background: rgba(0,0,0,.5); }
+dialog h2 { margin: 0 0 10px; font-size: 20px; }
+dialog .hint { margin: 4px 0 8px; color: var(--muted); font-size: 14px; }
+dialog hr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }
+#setMsg { margin: 8px 0 0; font-size: 14px; font-weight: 600; }
+#setMsg.good { color: var(--ok-ink); }
+#setMsg.bad { color: var(--red-ink); }
+</style>
+</head>
+<body class="out">
+
+<header class="top">
+  <div class="brand">
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="2" y="4" width="2" height="16"/><rect x="6" y="4" width="1" height="16"/><rect x="9" y="4" width="3" height="16"/><rect x="14" y="4" width="1" height="16"/><rect x="17" y="4" width="2" height="16"/><rect x="21" y="4" width="1" height="16"/></svg>
+    Liquor Scan
+  </div>
+  <button id="badge" class="badge demo" type="button">Demo data</button>
+  <button id="openSettings" class="icon-btn" type="button" aria-label="Settings">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+</header>
+
+<main>
+  <div class="seg" role="tablist" aria-label="Scan type">
+    <button id="tabIn" class="in" type="button" role="tab" aria-selected="false">Scan IN<small>delivery arrived</small></button>
+    <button id="tabOut" class="out" type="button" role="tab" aria-selected="true">Scan OUT<small>bottle sold</small></button>
+  </div>
+
+  <section class="cam" aria-label="Camera">
+    <span class="cam-tag" id="camTag">OUT · 1 bottle per scan</span>
+    <div id="reader"></div>
+    <div class="cam-idle" id="camIdle">
+      <button id="camBtn" class="primary" type="button">Start camera</button>
+      <p id="camMsg">Point the back camera at the barcode on the bottle.</p>
+    </div>
+  </section>
+
+  <form class="manual" id="manual" autocomplete="off">
+    <input id="codeInput" type="text" inputmode="numeric" placeholder="Or type the barcode" aria-label="Barcode">
+    <button class="ghost" type="submit">Enter</button>
+  </form>
+  <select id="pick" aria-label="Pick a product instead of scanning"><option value="">Or pick a product…</option></select>
+
+  <section id="card" class="card idle" aria-live="polite"></section>
+
+  <section class="panel" aria-labelledby="stockTitle">
+    <div class="panel-head"><h2 id="stockTitle">Stock now</h2><button class="ghost" id="refresh" type="button">Refresh</button></div>
+    <ul class="list" id="stock"><li><span class="empty">Loading…</span></li></ul>
+  </section>
+
+  <section class="panel" aria-labelledby="recentTitle">
+    <div class="panel-head"><h2 id="recentTitle">Scans on this phone</h2></div>
+    <ul class="list" id="recent"><li><span class="empty">No scans yet.</span></li></ul>
+  </section>
+</main>
+
+<datalist id="types"><option value="증류주"><option value="청주"><option value="약주"><option value="막걸리"></datalist>
+
+<dialog id="settings">
+  <form method="dialog">
+    <h2>Settings</h2>
+    <label for="urlInput"><b>Google Sheet link</b></label>
+    <p class="hint">The Apps Script web app URL (it ends in /exec). Leave it empty to use the demo data. It is saved on this phone only.</p>
+    <input id="urlInput" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off">
+    <p id="setMsg" role="status"></p>
+    <div class="row">
+      <button class="primary" id="saveUrl" type="button">Save and test</button>
+      <button class="ghost" value="close">Close</button>
+    </div>
+    <hr>
+    <p class="hint">Demo data: 8 fake products and 11 deliveries, the same as the sample sheet.</p>
+    <button class="ghost" id="resetDemo" type="button">Reset demo data</button>
+  </form>
+</dialog>
+
+<script>
+'use strict';
+// ==CORE START== same rules as Code.gs
+const SOON_DAYS = 7;
+function cleanCode(v) { return String(v == null ? '' : v).replace(/\D/g, ''); }
+function localISO(d) { const z = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); }
+function dayNumber(iso) { const p = String(iso).split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]) / 864e5; }
+function daysLeft(expiry, today) { return expiry ? Math.round(dayNumber(expiry) - dayNumber(today)) : null; }
+function batchStatus(left, expiry, today) {
+  if (left <= 0) return 'Sold out';
+  if (!expiry) return 'No expiry';
+  const d = daysLeft(expiry, today);
+  return d < 0 ? 'EXPIRED' : d <= SOON_DAYS ? 'Expires within 7 days' : 'OK';
+}
+// Oldest delivery first (date in, then delivery number). Returns which deliveries the bottles come from.
+function planOut(deliveries, barcode, qty) {
+  const num = id => Number(String(id).replace(/\D/g, '')) || 0;
+  const cands = deliveries.filter(d => d.barcode === barcode && d.left > 0)
+    .sort((a, b) => (a.dateIn < b.dateIn ? -1 : a.dateIn > b.dateIn ? 1 : num(a.id) - num(b.id)));
+  const takes = [];
+  let need = qty;
+  for (const d of cands) {
+    if (need <= 0) break;
+    const t = Math.min(need, d.left);
+    takes.push({ id: d.id, qty: t });
+    need -= t;
+  }
+  return { takes: takes, short: need };
+}
+function nextDeliveryId(deliveries) {
+  let max = 0;
+  for (const d of deliveries) { const m = /^D(\d+)$/i.exec(String(d.id).trim()); if (m) max = Math.max(max, Number(m[1])); }
+  return 'D' + String(max + 1).padStart(3, '0');
+}
+function checkScan(req) {
+  const barcode = cleanCode(req.barcode), inout = String(req.inout || '').toUpperCase();
+  const qty = req.qty == null || req.qty === '' ? 1 : Number(req.qty), expiry = req.expiry ? String(req.expiry) : '';
+  if (!/^\d{6,14}$/.test(barcode)) return { error: 'That does not look like a barcode: ' + (req.barcode || '(empty)') };
+  if (inout !== 'IN' && inout !== 'OUT') return { error: 'Choose IN or OUT.' };
+  if (!Number.isInteger(qty) || qty < 1 || qty > 999) return { error: 'Bottles must be a whole number from 1 to 999.' };
+  if (expiry && !/^\d{4}-\d{2}-\d{2}$/.test(expiry)) return { error: 'Expiry date must look like 2026-12-31.' };
+  return { barcode: barcode, inout: inout, qty: qty, expiry: inout === 'IN' ? expiry : '' };
+}
+function checkProduct(req) {
+  const barcode = cleanCode(req.barcode), name = String(req.name || '').trim(), type = String(req.type || '').trim();
+  const low = req.low == null || req.low === '' ? NaN : Number(req.low);
+  if (!/^\d{6,14}$/.test(barcode)) return { error: 'That does not look like a barcode: ' + (req.barcode || '(empty)') };
+  if (!name) return { error: 'Type the product name.' };
+  if (!Number.isInteger(low) || low < 0) return { error: 'Low-stock level must be a whole number, 0 or more.' };
+  return { barcode: barcode, name: name, type: type, low: low };
+}
+
+// Demo backend: same requests and answers as Code.gs, kept in this phone's storage.
+function summarize(db, p, today) {
+  const ds = db.deliveries.filter(d => d.barcode === p.barcode);
+  const sum = f => ds.filter(f).reduce((a, d) => a + d.left, 0);
+  const stock = sum(() => true);
+  return { barcode: p.barcode, name: p.name, type: p.type, low: p.low, stock: stock, status: stock <= p.low ? 'LOW' : 'OK',
+    soon: sum(d => batchStatus(d.left, d.expiry, today) === 'Expires within 7 days'),
+    expired: sum(d => batchStatus(d.left, d.expiry, today) === 'EXPIRED') };
+}
+function demoApi(db, req, today, now) {
+  const fail = (error, code) => ({ ok: false, error: error, code: code || '' });
+  if (req.action === 'products') return { ok: true, products: db.products.map(p => summarize(db, p, today)) };
+  if (req.action === 'addProduct') {
+    const c = checkProduct(req);
+    if (c.error) return fail(c.error);
+    if (db.products.some(p => p.barcode === c.barcode)) return fail('This barcode is already in Products.', 'exists');
+    const p = { barcode: c.barcode, name: c.name, type: c.type, low: c.low };
+    db.products.push(p);
+    return { ok: true, product: summarize(db, p, today) };
+  }
+  if (req.action !== 'scan') return fail('Unknown action: ' + req.action);
+  const c = checkScan(req);
+  if (c.error) return fail(c.error);
+  const p = db.products.find(x => x.barcode === c.barcode);
+  if (!p) return fail('Unknown barcode ' + c.barcode + '. Scan it IN to add it as a new product.', 'unknown');
+  let takes;
+  if (c.inout === 'IN') {
+    const id = nextDeliveryId(db.deliveries);
+    db.deliveries.push({ id: id, dateIn: today, barcode: c.barcode, expiry: c.expiry, qtyIn: c.qty, left: c.qty });
+    db.log.push([now, c.barcode, 'IN', c.qty, c.expiry, id]);
+    takes = [{ id: id, qty: c.qty }];
+  } else {
+    const plan = planOut(db.deliveries, c.barcode, c.qty);
+    if (plan.short > 0) return fail('The sheet shows only ' + (c.qty - plan.short) + ' bottle(s) of ' + p.name + ' left. Check the Deliveries tab.', 'short');
+    for (const t of plan.takes) {
+      db.deliveries.find(d => d.id === t.id).left -= t.qty;
+      db.log.push([now, c.barcode, 'OUT', t.qty, '', t.id]);
+    }
+    takes = plan.takes;
+  }
+  return { ok: true, inout: c.inout, qty: c.qty, product: summarize(db, p, today),
+    batches: takes.map(t => {
+      const d = db.deliveries.find(x => x.id === t.id);
+      return { id: t.id, qty: t.qty, expiry: d.expiry, days: daysLeft(d.expiry, today), status: batchStatus(d.left, d.expiry, today) };
+    }) };
+}
+// Same fake data as Sample_Stock_Sheet.xlsx (bottles left after the nights of Nov 7-9).
+const DEMO_SEED = {
+  products: [
+    { barcode: '8803477127827', name: '화요 25', type: '증류주', low: 10 },
+    { barcode: '8801619730690', name: '문배주', type: '증류주', low: 4 },
+    { barcode: '8804239384991', name: '백화수복', type: '청주', low: 12 },
+    { barcode: '8806989355726', name: '경주법주', type: '청주', low: 6 },
+    { barcode: '8800518471567', name: '백세주', type: '약주', low: 10 },
+    { barcode: '8800777778681', name: '한산 소곡주', type: '약주', low: 6 },
+    { barcode: '8808818365531', name: '장수 생막걸리', type: '막걸리', low: 10 },
+    { barcode: '8805753989228', name: '지평 생쌀막걸리', type: '막걸리', low: 10 },
+  ],
+  deliveries: [
+    { id: 'D001', dateIn: '2026-09-29', barcode: '8800777778681', expiry: '2026-11-16', qtyIn: 12, left: 7 },
+    { id: 'D002', dateIn: '2026-10-27', barcode: '8803477127827', expiry: '', qtyIn: 18, left: 8 },
+    { id: 'D003', dateIn: '2026-10-27', barcode: '8801619730690', expiry: '', qtyIn: 12, left: 8 },
+    { id: 'D004', dateIn: '2026-10-27', barcode: '8804239384991', expiry: '2027-10-01', qtyIn: 24, left: 11 },
+    { id: 'D005', dateIn: '2026-10-27', barcode: '8806989355726', expiry: '2027-09-15', qtyIn: 18, left: 11 },
+    { id: 'D006', dateIn: '2026-10-27', barcode: '8800518471567', expiry: '2027-04-20', qtyIn: 24, left: 8 },
+    { id: 'D007', dateIn: '2026-10-30', barcode: '8808818365531', expiry: '2026-11-09', qtyIn: 20, left: 7 },
+    { id: 'D008', dateIn: '2026-11-03', barcode: '8800777778681', expiry: '2027-10-20', qtyIn: 12, left: 12 },
+    { id: 'D009', dateIn: '2026-11-03', barcode: '8808818365531', expiry: '2026-11-13', qtyIn: 20, left: 20 },
+    { id: 'D010', dateIn: '2026-11-05', barcode: '8805753989228', expiry: '2026-11-15', qtyIn: 20, left: 12 },
+    { id: 'D011', dateIn: '2026-11-07', barcode: '8800518471567', expiry: '2027-10-25', qtyIn: 12, left: 12 },
+  ],
+  log: [],
+};
+// ==CORE END==
+
+const LIB_URL = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+const COOLDOWN_MS = 2500;   // the same barcode seen again within this time is ignored (camera reads ~10 times a second)
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clone = o => JSON.parse(JSON.stringify(o));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('liquorScan.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('liquorScan.' + k, JSON.stringify(v)); } catch (e) { /* private mode: keep in memory */ } },
+};
+
+const S = { mode: store.get('mode', 'OUT') === 'IN' ? 'IN' : 'OUT', url: store.get('url', ''), products: new Map(),
+  busy: false, form: false, last: { code: '', t: 0 }, lastReq: null, recent: [], cam: null, camOn: false, resume: false, audio: null };
+let demoDb = store.get('demo', null);
+if (!demoDb || !Array.isArray(demoDb.products) || !Array.isArray(demoDb.deliveries)) demoDb = clone(DEMO_SEED);
+
+// A link like .../index.html#sheet=<web app URL> saves the sheet link on the phone, so it never has to be typed.
+(function readHash() {
+  const m = /[#&]sheet=([^&]+)/.exec(location.hash);
+  if (!m) return;
+  S.url = decodeURIComponent(m[1]).trim();
+  store.set('url', S.url);
+  history.replaceState(null, '', location.pathname + location.search);
+})();
+
+// ---------- talking to the sheet (or the demo data) ----------
+async function api(req) {
+  if (!S.url) {
+    const now = new Date();
+    const r = demoApi(demoDb, req, localISO(now), now.toISOString());
+    if (req.action !== 'products') store.set('demo', demoDb);
+    await sleep(150);
+    return r;
+  }
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 20000);
+  try {
+    const res = req.action === 'products'
+      ? await fetch(S.url + (S.url.includes('?') ? '&' : '?') + 'action=products', { signal: ctl.signal })
+      // text/plain body: no CORS preflight, which Apps Script cannot answer
+      : await fetch(S.url, { method: 'POST', body: JSON.stringify(req), signal: ctl.signal });
+    const text = await res.text();
+    try { return JSON.parse(text); } catch (e) {
+      return { ok: false, error: 'The link answered, but not with sheet data. Check that it ends in /exec and that the web app is shared with "Anyone".' };
+    }
+  } catch (e) {
+    const saved = req.action === 'products' ? '' : ' Not saved.';
+    return { ok: false, offline: true, error: (e.name === 'AbortError' ? 'The sheet took too long to answer.' : 'Could not reach the sheet.') + saved };
+  } finally { clearTimeout(timer); }
+}
+
+async function loadProducts(flashCode) {
+  const r = await api({ action: 'products' });
+  if (!r.ok) {
+    $('#stock').innerHTML = '<li><span class="empty">' + esc(r.error) + '</span></li>';
+    return r;
+  }
+  S.products = new Map(r.products.map(p => [p.barcode, p]));
+  renderStock(flashCode);
+  renderPick();
+  return r;
+}
+
+// ---------- scanning ----------
+async function handleCode(raw, source) {
+  const code = cleanCode(raw);
+  if (!code) return;
+  if (S.busy) return;
+  if (source === 'camera') {
+    if (S.form) return;  // an IN form is open: finish it first
+    const now = Date.now();
+    if (code === S.last.code && now - S.last.t < COOLDOWN_MS) return;
+    S.last = { code: code, t: now };
+  }
+  beep(1320, 70); buzz(40);
+  if (S.mode === 'OUT') { S.form = false; return send({ action: 'scan', barcode: code, inout: 'OUT', qty: 1 }); }
+  let p = S.products.get(code);
+  if (!p) { await loadProducts(); p = S.products.get(code); }  // someone may have added it on the sheet
+  openInForm(code, p);
+}
+
+async function send(req) {
+  S.busy = true; S.lastReq = req;
+  const p = S.products.get(req.barcode);
+  const sign = req.inout === 'IN' ? '+' : '−';
+  setCard('', '<div class="res"><div class="delta">' + sign + req.qty + '</div><div><div class="name">' +
+    esc(p ? p.name : req.barcode) + '</div><div class="sub">Saving…</div></div></div>');
+  const r = await api(req);
+  S.busy = false;
+  if (!r.ok) {
+    beep(300, 220); buzz([90, 60, 90]);
+    showError(r.error, r.offline);
+    return r;
+  }
+  S.products.set(r.product.barcode, r.product);
+  renderStock(r.product.barcode);
+  renderPick();
+  showDone(r);
+  addRecent(r);
+  if (r.inout === 'IN') window.scrollTo({ top: 0, behavior: 'smooth' });  // camera back in view for the next product
+  return r;
+}
+
+function batchNotes(r) {
+  const notes = [];
+  let level = r.product.status === 'LOW' && r.inout === 'OUT' ? 'warn' : 'ok';
+  for (const b of r.batches) {
+    if (b.days == null || b.days === '') continue;
+    const d = Number(b.days);
+    if (d < 0) { notes.push('Delivery ' + b.id + ' expired ' + plural(-d, 'day') + ' ago. Check the shelf.'); level = 'bad'; }
+    else if (d <= SOON_DAYS) { notes.push('Delivery ' + b.id + ' expires ' + (d === 0 ? 'today' : 'in ' + plural(d, 'day')) + '.'); if (level !== 'bad') level = 'warn'; }
+  }
+  return { notes: notes, level: level };
+}
+
+function showDone(r) {
+  const p = r.product, n = batchNotes(r);
+  let sub;
+  if (r.inout === 'IN') {
+    const b = r.batches[0];
+    sub = 'Saved as delivery ' + esc(b.id) + (b.expiry ? ' · expires ' + esc(b.expiry) : ' · no expiry date') + '<br>' + plural(p.stock, 'bottle') + ' in stock now';
+  } else {
+    sub = plural(p.stock, 'bottle') + ' left' + (p.status === 'LOW' ? ' · <b>LOW stock</b> (at or below ' + p.low + ')' : '');
+  }
+  setCard(n.level, '<div class="res"><div class="delta">' + (r.inout === 'IN' ? '+' : '−') + r.qty + '</div><div><div class="name">' +
+    esc(p.name) + '</div><div class="sub">' + sub + '</div></div></div>' + n.notes.map(t => '<p class="note">' + esc(t) + '</p>').join(''));
+}
+
+function showError(msg, canRetry) {
+  setCard('bad', '<p class="msg">' + esc(msg) + '</p>' + (canRetry ? '<button class="primary" id="retry" type="button">Try again</button>' : ''));
+  if (canRetry) $('#retry').onclick = () => send(S.lastReq);
+}
+
+function setCard(cls, html) { const c = $('#card'); c.className = 'card ' + cls; c.innerHTML = html; }
+function showIdle() {
+  S.form = false;
+  setCard('idle', '<p>' + (S.mode === 'OUT'
+    ? 'Scan a bottle when it goes to a table. Each scan takes 1 bottle off, from the oldest delivery first.'
+    : 'Scan one bottle of each product in the delivery, then type how many came and the expiry date.') + '</p>');
+}
+
+// ---------- IN form (and new product form) ----------
+function openInForm(code, p) {
+  S.form = true;
+  const isNew = !p;
+  const noExp = !!p && p.type === '증류주';
+  setCard('', '<form class="form" id="inForm" novalidate>' +
+    (isNew
+      ? '<h3>New product</h3><div class="meta">Barcode ' + esc(code) + ' is not in Products yet. Add it once.</div>' +
+        '<label for="fName">Product name</label><input id="fName" type="text" autocomplete="off">' +
+        '<div class="two"><div><label for="fType">Type</label><input id="fType" type="text" list="types" placeholder="약주"></div>' +
+        '<div><label for="fLow">Low-stock level</label><input id="fLow" type="number" inputmode="numeric" min="0" value="6"></div></div>'
+      : '<h3>' + esc(p.name) + '</h3><div class="meta">' + esc(p.type || 'No type') + ' · ' + plural(p.stock, 'bottle') + ' in stock now</div>') +
+    '<label for="fQty">Bottles in this delivery</label>' +
+    '<div class="stepper"><button type="button" data-step="-1" aria-label="One less">−</button>' +
+    '<input id="fQty" type="number" inputmode="numeric" min="1" max="999" value="1">' +
+    '<button type="button" data-step="1" aria-label="One more">+</button></div>' +
+    '<div class="presets">' + [6, 12, 20, 24].map(n => '<button type="button" data-set="' + n + '">' + n + '</button>').join('') + '</div>' +
+    '<label for="fExp">Expiry date</label><input id="fExp" type="date"' + (noExp ? ' disabled' : '') + '>' +
+    '<label class="check"><input id="fNoExp" type="checkbox"' + (noExp ? ' checked' : '') + '> No expiry date (e.g. 증류주)</label>' +
+    '<p class="err" id="fErr" hidden></p>' +
+    '<div class="row"><button class="primary" id="fSave" type="submit">Save delivery</button>' +
+    '<button class="ghost" id="fCancel" type="button">Cancel</button></div></form>');
+
+  const f = $('#inForm'), qty = $('#fQty'), exp = $('#fExp'), noE = $('#fNoExp'), save = $('#fSave'), err = $('#fErr');
+  let pastOk = false;
+  const label = () => { const n = Number(qty.value); save.textContent = Number.isInteger(n) && n > 0 ? 'Save delivery: +' + n : 'Save delivery'; };
+  const showErr = t => { err.textContent = t; err.hidden = false; };
+  f.querySelectorAll('[data-step]').forEach(b => b.onclick = () => { qty.value = Math.max(1, (Number(qty.value) || 0) + Number(b.dataset.step)); label(); });
+  f.querySelectorAll('[data-set]').forEach(b => b.onclick = () => { qty.value = b.dataset.set; label(); });
+  qty.oninput = label;
+  noE.onchange = () => { exp.disabled = noE.checked; if (noE.checked) exp.value = ''; };
+  exp.onchange = () => { pastOk = false; };
+  $('#fCancel').onclick = showIdle;
+  label();
+  $('#card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (isNew) $('#fName').focus({ preventScroll: true });
+
+  f.onsubmit = async e => {
+    e.preventDefault();
+    if (S.busy) return;
+    err.hidden = true;
+    const n = Number(qty.value);
+    if (!Number.isInteger(n) || n < 1 || n > 999) return showErr('Bottles must be a whole number from 1 to 999.');
+    if (!noE.checked && !exp.value) return showErr('Pick the expiry date, or tick "No expiry date".');
+    if (exp.value && exp.value < localISO(new Date()) && !pastOk) { pastOk = true; return showErr('That date has already passed. Check it, or tap Save again to keep it.'); }
+    if (isNew) {
+      const req = { action: 'addProduct', barcode: code, name: $('#fName').value, type: $('#fType').value, low: $('#fLow').value };
+      const c = checkProduct(req);
+      if (c.error) return showErr(c.error);
+      S.busy = true; save.disabled = true; save.textContent = 'Adding product…';
+      const r = await api(req);
+      S.busy = false; save.disabled = false; label();
+      if (!r.ok) return showErr(r.error);
+      S.products.set(r.product.barcode, r.product);
+      renderStock(); renderPick();
+    }
+    S.form = false;
+    send({ action: 'scan', barcode: code, inout: 'IN', qty: n, expiry: noE.checked ? '' : exp.value });
+  };
+}
+
+// ---------- lists ----------
+function renderStock(flashCode) {
+  const ul = $('#stock');
+  if (!S.products.size) { ul.innerHTML = '<li><span class="empty">No products yet. Scan IN a bottle to add one.</span></li>'; return; }
+  ul.innerHTML = [...S.products.values()].map(p => {
+    const chips = (p.status === 'LOW' ? '<span class="chip red">LOW</span>' : '') +
+      (p.soon > 0 ? '<span class="chip amber">' + p.soon + ' expire within 7 days</span>' : '') +
+      (p.expired > 0 ? '<span class="chip red">' + p.expired + ' expired</span>' : '');
+    return '<li data-code="' + esc(p.barcode) + '"' + (p.barcode === flashCode ? ' class="flash"' : '') + '>' +
+      '<div class="pn">' + esc(p.name) + '<span class="ty">' + esc(p.type) + '</span></div>' +
+      '<div class="num">' + p.stock + '<small>bottles</small></div><div class="chips">' + chips + '</div></li>';
+  }).join('');
+}
+
+function renderPick() {
+  const sel = $('#pick');
+  sel.innerHTML = '<option value="">Or pick a product…</option>' +
+    [...S.products.values()].map(p => '<option value="' + esc(p.barcode) + '">' + esc(p.name) + ' (' + p.stock + ')</option>').join('');
+}
+
+function addRecent(r) {
+  const t = new Date(), z = n => String(n).padStart(2, '0');
+  S.recent.unshift({ time: z(t.getHours()) + ':' + z(t.getMinutes()), r: r });
+  S.recent = S.recent.slice(0, 15);
+  $('#recent').innerHTML = S.recent.map(x => {
+    const days = x.r.batches.map(b => (b.days == null || b.days === '' ? null : Number(b.days))).filter(d => d != null);
+    const chip = (days.some(d => d < 0) ? '<span class="chip red">expired batch</span>' : '') +
+      (days.some(d => d >= 0 && d <= SOON_DAYS) ? '<span class="chip amber">expires soon</span>' : '') +
+      (x.r.inout === 'OUT' && x.r.product.status === 'LOW' ? '<span class="chip red">LOW</span>' : '');
+    return '<li><div class="pn">' + (x.r.inout === 'IN' ? '+' : '−') + x.r.qty + ' ' + esc(x.r.product.name) +
+      '<span class="ty">' + x.time + ' · ' + x.r.batches.map(b => esc(b.id)).join(', ') + '</span></div>' +
+      '<div class="num">' + x.r.product.stock + '<small>left</small></div><div class="chips">' + chip + '</div></li>';
+  }).join('');
+}
+
+// ---------- mode, badge, settings ----------
+function setMode(m) {
+  S.mode = m; store.set('mode', m);
+  document.body.className = m === 'IN' ? 'in' : 'out';
+  $('#tabIn').setAttribute('aria-selected', String(m === 'IN'));
+  $('#tabOut').setAttribute('aria-selected', String(m === 'OUT'));
+  $('#camTag').textContent = m === 'IN' ? 'IN · then type bottles and date' : 'OUT · 1 bottle per scan';
+  S.last = { code: '', t: 0 };
+  showIdle();
+}
+function renderBadge() {
+  const b = $('#badge');
+  b.textContent = S.url ? 'Google Sheet' : 'Demo data';
+  b.className = 'badge ' + (S.url ? 'sheet' : 'demo');
+  $('#stockTitle').textContent = S.url ? 'Stock now · sheet' : 'Stock now · demo';
+}
+function openSettings() {
+  $('#urlInput').value = S.url;
+  $('#setMsg').textContent = ''; $('#setMsg').className = '';
+  $('#settings').showModal();
+}
+async function saveUrl() {
+  const v = $('#urlInput').value.trim(), msg = $('#setMsg');
+  if (v && !/^(https:\/\/|http:\/\/(localhost|127\.0\.0\.1)[:/])/.test(v)) { msg.className = 'bad'; msg.textContent = 'The link must start with https://'; return; }
+  S.url = v; store.set('url', v); renderBadge();
+  msg.className = ''; msg.textContent = v ? 'Testing the link…' : 'Using demo data.';
+  const r = await loadProducts();
+  if (!v) return;
+  msg.className = r.ok ? 'good' : 'bad';
+  msg.textContent = r.ok ? 'Connected. ' + plural(r.products.length, 'product') + ' found in the sheet.' : r.error;
+}
+
+// ---------- camera ----------
+let libPromise = null;
+function loadLib() {
+  if (window.__Html5QrcodeLibrary__) return Promise.resolve(window.__Html5QrcodeLibrary__);
+  if (!libPromise) libPromise = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = LIB_URL;
+    s.onload = () => (window.__Html5QrcodeLibrary__ ? res(window.__Html5QrcodeLibrary__) : rej(new Error('library')));
+    s.onerror = () => { libPromise = null; rej(new Error('library')); };
+    document.head.appendChild(s);
+  });
+  return libPromise;
+}
+function camMsg(text, bad) { const p = $('#camMsg'); p.textContent = text; p.className = bad ? 'bad' : ''; $('#camIdle').hidden = false; }
+function cameraError(e) {
+  const s = String(e && (e.name || '') + ' ' + (e.message || e));
+  if (/NotAllowed|Permission/i.test(s)) return 'Camera permission is blocked. Allow the camera for this site in the browser settings, then tap Start camera.';
+  if (/NotFound|Requested device/i.test(s)) return 'No camera found on this device. Type the barcode below instead.';
+  if (/NotReadable|in use/i.test(s)) return 'Another app is using the camera. Close it and try again.';
+  return 'The camera did not start (' + s.trim().slice(0, 80) + '). Type the barcode below instead.';
+}
+async function startCamera() {
+  unlockAudio();
+  if (S.camOn) return;
+  if (!window.isSecureContext) return camMsg('The camera only works on an https:// page. Open the page from its GitHub Pages link.', true);
+  $('#camBtn').disabled = true; camMsg('Starting the camera…');
+  try {
+    const L = await loadLib().catch(() => { throw new Error('The camera scanner could not load. Check the internet, or type the barcode below.'); });
+    if (!S.cam) {
+      const F = L.Html5QrcodeSupportedFormats;
+      S.cam = new L.Html5Qrcode('reader', { formatsToSupport: [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E], useBarCodeDetectorIfSupported: true, verbose: false });
+    }
+    await S.cam.start({ facingMode: 'environment' },
+      { fps: 12, aspectRatio: 1.5, qrbox: (w, h) => ({ width: Math.max(80, Math.floor(w * 0.86)), height: Math.max(60, Math.floor(Math.min(h * 0.6, w * 0.42))) }) },
+      text => handleCode(text, 'camera'), () => {});
+    S.camOn = true;
+    $('#camIdle').hidden = true;
+  } catch (e) {
+    camMsg(/could not load/.test(String(e.message)) ? e.message : cameraError(e), true);
+  } finally { $('#camBtn').disabled = false; }
+}
+async function stopCamera() {
+  if (!S.camOn) return;
+  S.camOn = false;
+  try { await S.cam.stop(); } catch (e) { /* already stopped */ }
+  camMsg('Camera paused.');
+}
+function unlockAudio() {
+  try {
+    if (!S.audio) { const C = window.AudioContext || window.webkitAudioContext; if (C) S.audio = new C(); }
+    if (S.audio && S.audio.state === 'suspended') S.audio.resume();
+  } catch (e) { /* no sound */ }
+}
+function beep(freq, ms) {
+  try {
+    const a = S.audio; if (!a) return;
+    const o = a.createOscillator(), g = a.createGain();
+    o.frequency.value = freq; g.gain.value = 0.08; o.connect(g); g.connect(a.destination);
+    o.start(); o.stop(a.currentTime + ms / 1000);
+  } catch (e) { /* no sound */ }
+}
+function buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) { /* no vibration */ } }
+
+// ---------- wiring ----------
+$('#tabIn').onclick = () => setMode('IN');
+$('#tabOut').onclick = () => setMode('OUT');
+$('#camBtn').onclick = startCamera;
+$('#manual').onsubmit = e => { e.preventDefault(); unlockAudio(); const v = $('#codeInput').value; $('#codeInput').value = ''; handleCode(v, 'manual'); };
+$('#pick').onchange = e => { const v = e.target.value; e.target.value = ''; unlockAudio(); handleCode(v, 'pick'); };
+$('#refresh').onclick = () => loadProducts();
+$('#badge').onclick = openSettings;
+$('#openSettings').onclick = openSettings;
+$('#saveUrl').onclick = saveUrl;
+$('#resetDemo').onclick = () => {
+  if (!confirm('Put the demo data back to the start? Your demo scans will be cleared.')) return;
+  demoDb = clone(DEMO_SEED); store.set('demo', demoDb);
+  if (!S.url) loadProducts();
+  $('#setMsg').className = 'good'; $('#setMsg').textContent = 'Demo data reset.';
+};
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (S.camOn) { S.resume = true; stopCamera(); } }
+  else if (S.resume) { S.resume = false; startCamera(); }
+});
+
+setMode(S.mode);
+renderBadge();
+loadProducts().then(r => { if (!r.ok) showError('Could not load products: ' + r.error, false); });
+loadLib().catch(() => {});
+</script>
+</body>
+</html>
