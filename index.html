@@ -182,7 +182,7 @@ dialog hr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }
   </section>
 </main>
 
-<datalist id="types"><option value="증류주"><option value="청주"><option value="약주"><option value="막걸리"></datalist>
+<datalist id="types"><option value="증류주"><option value="청주/약주"><option value="탁주"><option value="과실주"><option value="사케"></datalist>
 
 <dialog id="settings">
   <form method="dialog">
@@ -196,7 +196,7 @@ dialog hr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }
       <button class="ghost" value="close">Close</button>
     </div>
     <hr>
-    <p class="hint">Demo data: 8 fake products and 11 deliveries, the same as the sample sheet.</p>
+    <p class="hint">Demo data: 22 products and 24 deliveries with fake stock, the same as the sample sheet.</p>
     <button class="ghost" id="resetDemo" type="button">Reset demo data</button>
   </form>
 </dialog>
@@ -246,11 +246,13 @@ function checkScan(req) {
 }
 function checkProduct(req) {
   const barcode = cleanCode(req.barcode), name = String(req.name || '').trim(), type = String(req.type || '').trim();
-  const low = req.low == null || req.low === '' ? NaN : Number(req.low);
+  const whole = v => (v == null || v === '' ? NaN : Number(v));
+  const par = whole(req.par), low = whole(req.low);
   if (!/^\d{6,14}$/.test(barcode)) return { error: 'That does not look like a barcode: ' + (req.barcode || '(empty)') };
   if (!name) return { error: 'Type the product name.' };
+  if (!Number.isInteger(par) || par < 0) return { error: 'Par level must be a whole number, 0 or more.' };
   if (!Number.isInteger(low) || low < 0) return { error: 'Low-stock level must be a whole number, 0 or more.' };
-  return { barcode: barcode, name: name, type: type, low: low };
+  return { barcode: barcode, name: name, type: type, par: par, low: low };
 }
 
 // Demo backend: same requests and answers as Code.gs, kept in this phone's storage.
@@ -258,7 +260,8 @@ function summarize(db, p, today) {
   const ds = db.deliveries.filter(d => d.barcode === p.barcode);
   const sum = f => ds.filter(f).reduce((a, d) => a + d.left, 0);
   const stock = sum(() => true);
-  return { barcode: p.barcode, name: p.name, type: p.type, low: p.low, stock: stock, status: stock <= p.low ? 'LOW' : 'OK',
+  return { barcode: p.barcode, name: p.name, type: p.type, par: p.par, low: p.low, stock: stock,
+    status: stock <= p.low ? 'LOW' : 'OK', order: Math.max(0, p.par - stock),
     soon: sum(d => batchStatus(d.left, d.expiry, today) === 'Expires within 7 days'),
     expired: sum(d => batchStatus(d.left, d.expiry, today) === 'EXPIRED') };
 }
@@ -269,7 +272,7 @@ function demoApi(db, req, today, now) {
     const c = checkProduct(req);
     if (c.error) return fail(c.error);
     if (db.products.some(p => p.barcode === c.barcode)) return fail('This barcode is already in Products.', 'exists');
-    const p = { barcode: c.barcode, name: c.name, type: c.type, low: c.low };
+    const p = { barcode: c.barcode, name: c.name, type: c.type, par: c.par, low: c.low };
     db.products.push(p);
     return { ok: true, product: summarize(db, p, today) };
   }
@@ -299,30 +302,57 @@ function demoApi(db, req, today, now) {
       return { id: t.id, qty: t.qty, expiry: d.expiry, days: daysLeft(d.expiry, today), status: batchStatus(d.left, d.expiry, today) };
     }) };
 }
-// Same fake data as Sample_Stock_Sheet.xlsx (bottles left after the nights of Nov 7-9).
+// Same fake data as Sample_Stock_Sheet.xlsx (bottles left after the nights of Nov 13-15).
 const DEMO_SEED = {
   products: [
-    { barcode: '8803477127827', name: '화요 25', type: '증류주', low: 10 },
-    { barcode: '8801619730690', name: '문배주', type: '증류주', low: 4 },
-    { barcode: '8804239384991', name: '백화수복', type: '청주', low: 12 },
-    { barcode: '8806989355726', name: '경주법주', type: '청주', low: 6 },
-    { barcode: '8800518471567', name: '백세주', type: '약주', low: 10 },
-    { barcode: '8800777778681', name: '한산 소곡주', type: '약주', low: 6 },
-    { barcode: '8808818365531', name: '장수 생막걸리', type: '막걸리', low: 10 },
-    { barcode: '8805753989228', name: '지평 생쌀막걸리', type: '막걸리', low: 10 },
+    { barcode: '8809742740500', name: '서울의 밤', type: '증류주', par: 6, low: 2 },
+    { barcode: '8801507196317', name: '도원결의', type: '증류주', par: 6, low: 2 },
+    { barcode: '8802605080843', name: '황금보리17', type: '증류주', par: 6, low: 2 },
+    { barcode: '8800253576411', name: '만월24', type: '증류주', par: 6, low: 2 },
+    { barcode: '8806582970104', name: '겨울지나35', type: '증류주', par: 6, low: 2 },
+    { barcode: '8804801058817', name: '황진이', type: '청주/약주', par: 5, low: 2 },
+    { barcode: '8801978408438', name: '솔송주', type: '청주/약주', par: 5, low: 2 },
+    { barcode: '8807537172758', name: '서설', type: '청주/약주', par: 5, low: 2 },
+    { barcode: '8801294847430', name: '김포예주 프리미엄', type: '청주/약주', par: 5, low: 2 },
+    { barcode: '8807941322671', name: '일엽편주', type: '청주/약주', par: 5, low: 2 },
+    { barcode: '8806994582285', name: '호랑이생막걸리', type: '탁주', par: 4, low: 2 },
+    { barcode: '8809434168414', name: '우렁이쌀', type: '탁주', par: 4, low: 2 },
+    { barcode: '8803711333175', name: '오미자 생막걸리', type: '탁주', par: 4, low: 2 },
+    { barcode: '8808510228257', name: '복순도가', type: '탁주', par: 4, low: 2 },
+    { barcode: '8809551480543', name: '사랑할때 12도', type: '과실주', par: 6, low: 2 },
+    { barcode: '8800855315418', name: '니모메', type: '과실주', par: 6, low: 2 },
+    { barcode: '8802488305309', name: '고흥유자주', type: '과실주', par: 6, low: 2 },
+    { barcode: '8802891220374', name: '장수오미자주', type: '과실주', par: 6, low: 2 },
+    { barcode: '8800533234376', name: '북극곰의눈물', type: '사케', par: 4, low: 2 },
+    { barcode: '8803430087991', name: '와카나미 준마이', type: '사케', par: 4, low: 2 },
+    { barcode: '8806454716205', name: '츠루우메유즈', type: '사케', par: 4, low: 2 },
+    { barcode: '8801923452189', name: '야마와 준마이 다이긴죠', type: '사케', par: 4, low: 2 },
   ],
   deliveries: [
-    { id: 'D001', dateIn: '2026-09-29', barcode: '8800777778681', expiry: '2026-11-16', qtyIn: 12, left: 7 },
-    { id: 'D002', dateIn: '2026-10-27', barcode: '8803477127827', expiry: '', qtyIn: 18, left: 8 },
-    { id: 'D003', dateIn: '2026-10-27', barcode: '8801619730690', expiry: '', qtyIn: 12, left: 8 },
-    { id: 'D004', dateIn: '2026-10-27', barcode: '8804239384991', expiry: '2027-10-01', qtyIn: 24, left: 11 },
-    { id: 'D005', dateIn: '2026-10-27', barcode: '8806989355726', expiry: '2027-09-15', qtyIn: 18, left: 11 },
-    { id: 'D006', dateIn: '2026-10-27', barcode: '8800518471567', expiry: '2027-04-20', qtyIn: 24, left: 8 },
-    { id: 'D007', dateIn: '2026-10-30', barcode: '8808818365531', expiry: '2026-11-09', qtyIn: 20, left: 7 },
-    { id: 'D008', dateIn: '2026-11-03', barcode: '8800777778681', expiry: '2027-10-20', qtyIn: 12, left: 12 },
-    { id: 'D009', dateIn: '2026-11-03', barcode: '8808818365531', expiry: '2026-11-13', qtyIn: 20, left: 20 },
-    { id: 'D010', dateIn: '2026-11-05', barcode: '8805753989228', expiry: '2026-11-15', qtyIn: 20, left: 12 },
-    { id: 'D011', dateIn: '2026-11-07', barcode: '8800518471567', expiry: '2027-10-25', qtyIn: 12, left: 12 },
+    { id: 'D001', dateIn: '2026-10-26', barcode: '8806994582285', expiry: '2026-11-12', qtyIn: 4, left: 1 },
+    { id: 'D002', dateIn: '2026-10-26', barcode: '8801978408438', expiry: '2026-11-22', qtyIn: 3, left: 1 },
+    { id: 'D003', dateIn: '2026-10-26', barcode: '8807537172758', expiry: '2027-04-30', qtyIn: 5, left: 3 },
+    { id: 'D004', dateIn: '2026-10-26', barcode: '8804801058817', expiry: '2027-05-15', qtyIn: 5, left: 3 },
+    { id: 'D005', dateIn: '2026-10-26', barcode: '8800533234376', expiry: '2027-10-01', qtyIn: 4, left: 2 },
+    { id: 'D006', dateIn: '2026-10-26', barcode: '8800855315418', expiry: '2027-12-31', qtyIn: 6, left: 4 },
+    { id: 'D007', dateIn: '2026-11-02', barcode: '8801507196317', expiry: '', qtyIn: 6, left: 4 },
+    { id: 'D008', dateIn: '2026-11-02', barcode: '8802605080843', expiry: '', qtyIn: 6, left: 3 },
+    { id: 'D009', dateIn: '2026-11-02', barcode: '8800253576411', expiry: '', qtyIn: 6, left: 5 },
+    { id: 'D010', dateIn: '2026-11-02', barcode: '8806582970104', expiry: '', qtyIn: 6, left: 5 },
+    { id: 'D011', dateIn: '2026-11-02', barcode: '8801294847430', expiry: '2027-05-20', qtyIn: 5, left: 3 },
+    { id: 'D012', dateIn: '2026-11-02', barcode: '8807941322671', expiry: '2027-06-01', qtyIn: 5, left: 4 },
+    { id: 'D013', dateIn: '2026-11-02', barcode: '8809551480543', expiry: '2028-01-31', qtyIn: 6, left: 3 },
+    { id: 'D014', dateIn: '2026-11-02', barcode: '8802488305309', expiry: '2027-11-30', qtyIn: 6, left: 5 },
+    { id: 'D015', dateIn: '2026-11-02', barcode: '8802891220374', expiry: '2027-10-31', qtyIn: 6, left: 5 },
+    { id: 'D016', dateIn: '2026-11-02', barcode: '8803430087991', expiry: '2027-09-30', qtyIn: 4, left: 3 },
+    { id: 'D017', dateIn: '2026-11-02', barcode: '8806454716205', expiry: '2027-08-31', qtyIn: 4, left: 3 },
+    { id: 'D018', dateIn: '2026-11-02', barcode: '8801923452189', expiry: '2027-10-15', qtyIn: 4, left: 3 },
+    { id: 'D019', dateIn: '2026-11-09', barcode: '8809742740500', expiry: '', qtyIn: 6, left: 2 },
+    { id: 'D020', dateIn: '2026-11-09', barcode: '8801978408438', expiry: '2027-05-31', qtyIn: 2, left: 2 },
+    { id: 'D021', dateIn: '2026-11-09', barcode: '8809434168414', expiry: '2026-11-30', qtyIn: 4, left: 3 },
+    { id: 'D022', dateIn: '2026-11-09', barcode: '8803711333175', expiry: '2026-11-21', qtyIn: 4, left: 3 },
+    { id: 'D023', dateIn: '2026-11-09', barcode: '8808510228257', expiry: '2026-12-05', qtyIn: 4, left: 1 },
+    { id: 'D024', dateIn: '2026-11-12', barcode: '8806994582285', expiry: '2026-11-23', qtyIn: 3, left: 3 },
   ],
   log: [],
 };
@@ -330,6 +360,8 @@ const DEMO_SEED = {
 
 const LIB_URL = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
 const COOLDOWN_MS = 2500;   // the same barcode seen again within this time is ignored (camera reads ~10 times a second)
+const TYPE_PAR = { '증류주': 6, '청주/약주': 5, '탁주': 4, '과실주': 6, '사케': 4 };  // par level for a new product, by type
+const NEW_LOW = 2;          // low-stock level for a new product
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
@@ -451,7 +483,9 @@ function showDone(r) {
     const b = r.batches[0];
     sub = 'Saved as delivery ' + esc(b.id) + (b.expiry ? ' · expires ' + esc(b.expiry) : ' · no expiry date') + '<br>' + plural(p.stock, 'bottle') + ' in stock now';
   } else {
-    sub = plural(p.stock, 'bottle') + ' left' + (p.status === 'LOW' ? ' · <b>LOW stock</b> (at or below ' + p.low + ')' : '');
+    sub = plural(p.stock, 'bottle') + ' left' + (p.status !== 'LOW' ? ''
+      : p.order > 0 ? ' · <b>LOW stock</b>: order ' + p.order + ' to get back to ' + p.par
+      : ' · <b>LOW stock</b> (at or below ' + p.low + ')');
   }
   setCard(n.level, '<div class="res"><div class="delta">' + (r.inout === 'IN' ? '+' : '−') + r.qty + '</div><div><div class="name">' +
     esc(p.name) + '</div><div class="sub">' + sub + '</div></div></div>' + n.notes.map(t => '<p class="note">' + esc(t) + '</p>').join(''));
@@ -475,18 +509,21 @@ function openInForm(code, p) {
   S.form = true;
   const isNew = !p;
   const noExp = !!p && p.type === '증류주';
+  const startQty = p && p.order > 0 ? p.order : 1;  // what it takes to get back to the par level
   setCard('', '<form class="form" id="inForm" novalidate>' +
     (isNew
       ? '<h3>New product</h3><div class="meta">Barcode ' + esc(code) + ' is not in Products yet. Add it once.</div>' +
         '<label for="fName">Product name</label><input id="fName" type="text" autocomplete="off">' +
-        '<div class="two"><div><label for="fType">Type</label><input id="fType" type="text" list="types" placeholder="약주"></div>' +
-        '<div><label for="fLow">Low-stock level</label><input id="fLow" type="number" inputmode="numeric" min="0" value="6"></div></div>'
-      : '<h3>' + esc(p.name) + '</h3><div class="meta">' + esc(p.type || 'No type') + ' · ' + plural(p.stock, 'bottle') + ' in stock now</div>') +
+        '<label for="fType">Type</label><input id="fType" type="text" list="types" placeholder="탁주">' +
+        '<div class="two"><div><label for="fPar">Par level</label><input id="fPar" type="number" inputmode="numeric" min="0" value=""></div>' +
+        '<div><label for="fLow">Low-stock level</label><input id="fLow" type="number" inputmode="numeric" min="0" value="' + NEW_LOW + '"></div></div>'
+      : '<h3>' + esc(p.name) + '</h3><div class="meta">' + esc(p.type || 'No type') + ' · ' + plural(p.stock, 'bottle') + ' in stock now' +
+        (p.par > 0 ? ' · par level ' + p.par : '') + '</div>') +
     '<label for="fQty">Bottles in this delivery</label>' +
     '<div class="stepper"><button type="button" data-step="-1" aria-label="One less">−</button>' +
-    '<input id="fQty" type="number" inputmode="numeric" min="1" max="999" value="1">' +
+    '<input id="fQty" type="number" inputmode="numeric" min="1" max="999" value="' + startQty + '">' +
     '<button type="button" data-step="1" aria-label="One more">+</button></div>' +
-    '<div class="presets">' + [6, 12, 20, 24].map(n => '<button type="button" data-set="' + n + '">' + n + '</button>').join('') + '</div>' +
+    '<div class="presets">' + [2, 4, 6, 12].map(n => '<button type="button" data-set="' + n + '">' + n + '</button>').join('') + '</div>' +
     '<label for="fExp">Expiry date</label><input id="fExp" type="date"' + (noExp ? ' disabled' : '') + '>' +
     '<label class="check"><input id="fNoExp" type="checkbox"' + (noExp ? ' checked' : '') + '> No expiry date (e.g. 증류주)</label>' +
     '<p class="err" id="fErr" hidden></p>' +
@@ -503,6 +540,12 @@ function openInForm(code, p) {
   noE.onchange = () => { exp.disabled = noE.checked; if (noE.checked) exp.value = ''; };
   exp.onchange = () => { pastOk = false; };
   $('#fCancel').onclick = showIdle;
+  if (isNew) {  // a known type fills in its par level, until the par level is typed by hand
+    const par = $('#fPar');
+    let parTyped = false;
+    par.oninput = () => { parTyped = par.value !== ''; };
+    $('#fType').oninput = () => { const v = TYPE_PAR[$('#fType').value.trim()]; if (!parTyped && v != null) par.value = v; };
+  }
   label();
   $('#card').scrollIntoView({ behavior: 'smooth', block: 'start' });
   if (isNew) $('#fName').focus({ preventScroll: true });
@@ -516,7 +559,8 @@ function openInForm(code, p) {
     if (!noE.checked && !exp.value) return showErr('Pick the expiry date, or tick "No expiry date".');
     if (exp.value && exp.value < localISO(new Date()) && !pastOk) { pastOk = true; return showErr('That date has already passed. Check it, or tap Save again to keep it.'); }
     if (isNew) {
-      const req = { action: 'addProduct', barcode: code, name: $('#fName').value, type: $('#fType').value, low: $('#fLow').value };
+      const req = { action: 'addProduct', barcode: code, name: $('#fName').value, type: $('#fType').value,
+        par: $('#fPar').value, low: $('#fLow').value };
       const c = checkProduct(req);
       if (c.error) return showErr(c.error);
       S.busy = true; save.disabled = true; save.textContent = 'Adding product…';
@@ -541,7 +585,7 @@ function renderStock(flashCode) {
       (p.expired > 0 ? '<span class="chip red">' + p.expired + ' expired</span>' : '');
     return '<li data-code="' + esc(p.barcode) + '"' + (p.barcode === flashCode ? ' class="flash"' : '') + '>' +
       '<div class="pn">' + esc(p.name) + '<span class="ty">' + esc(p.type) + '</span></div>' +
-      '<div class="num">' + p.stock + '<small>bottles</small></div><div class="chips">' + chips + '</div></li>';
+      '<div class="num">' + p.stock + '<small>' + (p.par > 0 ? 'of ' + p.par : 'bottles') + '</small></div><div class="chips">' + chips + '</div></li>';
   }).join('');
 }
 
