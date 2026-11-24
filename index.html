@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -35,6 +35,7 @@
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
+body, button, input, select { word-break: keep-all; overflow-wrap: anywhere; }
 body { margin: 0; color: var(--ink); background-color: var(--bg);
   background-image: radial-gradient(rgba(120,95,60,.05) 1px, transparent 1px), radial-gradient(rgba(120,95,60,.04) 1px, transparent 1px);
   background-size: 7px 7px, 11px 11px; background-position: 0 0, 3px 5px;
@@ -174,43 +175,43 @@ dialog hr { border: 0; border-top: 1px dashed var(--rule); margin: 16px 0; }
     <span class="seal" aria-hidden="true">酒</span>
     Liquor Scan
   </div>
-  <button id="badge" class="badge demo" type="button">Demo data</button>
-  <button id="openSettings" class="icon-btn" type="button" aria-label="Settings">
+  <button id="badge" class="badge demo" type="button">데모 데이터</button>
+  <button id="openSettings" class="icon-btn" type="button" aria-label="설정">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
   </button>
 </header>
 
 <main>
-  <div class="seg" role="tablist" aria-label="Scan type">
-    <button id="tabIn" class="in" type="button" role="tab" aria-selected="false">Scan IN<small>delivery arrived</small></button>
-    <button id="tabOut" class="out" type="button" role="tab" aria-selected="true">Scan OUT<small>bottle sold</small></button>
+  <div class="seg" role="tablist" aria-label="스캔 종류">
+    <button id="tabIn" class="in" type="button" role="tab" aria-selected="false">Scan IN<small>입고됐을 때</small></button>
+    <button id="tabOut" class="out" type="button" role="tab" aria-selected="true">Scan OUT<small>병이 나갈 때</small></button>
   </div>
 
-  <section class="cam" aria-label="Camera">
-    <span class="cam-tag" id="camTag">OUT · 1 bottle per scan</span>
+  <section class="cam" aria-label="카메라">
+    <span class="cam-tag" id="camTag">OUT · 스캔 1번에 1병</span>
     <div id="reader"></div>
     <div class="cam-idle" id="camIdle">
-      <button id="camBtn" class="primary" type="button">Start camera</button>
-      <p id="camMsg">Point the back camera at the barcode on the bottle.</p>
+      <button id="camBtn" class="primary" type="button">카메라 켜기</button>
+      <p id="camMsg">술병의 바코드에 폰 뒷면 카메라를 대 주세요.</p>
     </div>
   </section>
 
   <form class="manual" id="manual" autocomplete="off">
-    <input id="codeInput" type="text" inputmode="numeric" placeholder="Or type the barcode" aria-label="Barcode">
-    <button class="ghost" type="submit">Enter</button>
+    <input id="codeInput" type="text" inputmode="numeric" placeholder="또는 바코드 번호 입력" aria-label="바코드">
+    <button class="ghost" type="submit">입력</button>
   </form>
-  <select id="pick" aria-label="Pick a product instead of scanning"><option value="">Or pick a product…</option></select>
+  <select id="pick" aria-label="스캔 대신 상품 고르기"><option value="">또는 목록에서 상품 고르기…</option></select>
 
   <section id="card" class="card idle" aria-live="polite"></section>
 
   <section class="panel" aria-labelledby="stockTitle">
-    <div class="panel-head"><h2 id="stockTitle">Stock now</h2><button class="ghost" id="refresh" type="button">Refresh</button></div>
-    <ul class="list" id="stock"><li><span class="empty">Loading…</span></li></ul>
+    <div class="panel-head"><h2 id="stockTitle">현재 재고</h2><button class="ghost" id="refresh" type="button">새로고침</button></div>
+    <ul class="list" id="stock"><li><span class="empty">불러오는 중…</span></li></ul>
   </section>
 
   <section class="panel" aria-labelledby="recentTitle">
-    <div class="panel-head"><h2 id="recentTitle">Scans on this phone</h2></div>
-    <ul class="list" id="recent"><li><span class="empty">No scans yet.</span></li></ul>
+    <div class="panel-head"><h2 id="recentTitle">이 폰에서 한 스캔</h2></div>
+    <ul class="list" id="recent"><li><span class="empty">아직 스캔 기록이 없어요.</span></li></ul>
   </section>
 </main>
 
@@ -218,18 +219,18 @@ dialog hr { border: 0; border-top: 1px dashed var(--rule); margin: 16px 0; }
 
 <dialog id="settings">
   <form method="dialog">
-    <h2>Settings</h2>
-    <label for="urlInput"><b>Google Sheet link</b></label>
-    <p class="hint">The Apps Script web app URL (it ends in /exec). Leave it empty to use the demo data. It is saved on this phone only.</p>
+    <h2>설정</h2>
+    <label for="urlInput"><b>구글 시트 연결 주소</b></label>
+    <p class="hint">Apps Script 웹 앱 주소예요(/exec로 끝나요). 비워 두면 데모 데이터를 써요. 주소는 이 폰에만 저장돼요.</p>
     <input id="urlInput" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off">
     <p id="setMsg" role="status"></p>
     <div class="row">
-      <button class="primary" id="saveUrl" type="button">Save and test</button>
-      <button class="ghost" value="close">Close</button>
+      <button class="primary" id="saveUrl" type="button">저장하고 연결 확인</button>
+      <button class="ghost" value="close">닫기</button>
     </div>
     <hr>
-    <p class="hint">Demo data: 22 products and 44 deliveries with fake stock, the same as the sample sheet.</p>
-    <button class="ghost" id="resetDemo" type="button">Reset demo data</button>
+    <p class="hint">데모 데이터: 상품 22개, 입고 44건. 샘플 시트와 같은 가짜 재고예요.</p>
+    <button class="ghost" id="resetDemo" type="button">데모 데이터 처음으로 되돌리기</button>
   </form>
 </dialog>
 
@@ -270,20 +271,20 @@ function nextDeliveryId(deliveries) {
 function checkScan(req) {
   const barcode = cleanCode(req.barcode), inout = String(req.inout || '').toUpperCase();
   const qty = req.qty == null || req.qty === '' ? 1 : Number(req.qty), expiry = req.expiry ? String(req.expiry) : '';
-  if (!/^\d{6,14}$/.test(barcode)) return { error: 'That does not look like a barcode: ' + (req.barcode || '(empty)') };
-  if (inout !== 'IN' && inout !== 'OUT') return { error: 'Choose IN or OUT.' };
-  if (!Number.isInteger(qty) || qty < 1 || qty > 999) return { error: 'Bottles must be a whole number from 1 to 999.' };
-  if (expiry && !/^\d{4}-\d{2}-\d{2}$/.test(expiry)) return { error: 'Expiry date must look like 2026-12-31.' };
+  if (!/^\d{6,14}$/.test(barcode)) return { error: '바코드 형식이 아니에요: ' + (req.barcode || '(빈 칸)') };
+  if (inout !== 'IN' && inout !== 'OUT') return { error: 'IN 또는 OUT을 골라 주세요.' };
+  if (!Number.isInteger(qty) || qty < 1 || qty > 999) return { error: '병 수는 1~999 사이의 정수로 넣어 주세요.' };
+  if (expiry && !/^\d{4}-\d{2}-\d{2}$/.test(expiry)) return { error: '유통기한은 2026-12-31 형식이어야 해요.' };
   return { barcode: barcode, inout: inout, qty: qty, expiry: inout === 'IN' ? expiry : '' };
 }
 function checkProduct(req) {
   const barcode = cleanCode(req.barcode), name = String(req.name || '').trim(), type = String(req.type || '').trim();
   const whole = v => (v == null || v === '' ? NaN : Number(v));
   const par = whole(req.par), low = whole(req.low);
-  if (!/^\d{6,14}$/.test(barcode)) return { error: 'That does not look like a barcode: ' + (req.barcode || '(empty)') };
-  if (!name) return { error: 'Type the product name.' };
-  if (!Number.isInteger(par) || par < 0) return { error: 'Par level must be a whole number, 0 or more.' };
-  if (!Number.isInteger(low) || low < 0) return { error: 'Low-stock level must be a whole number, 0 or more.' };
+  if (!/^\d{6,14}$/.test(barcode)) return { error: '바코드 형식이 아니에요: ' + (req.barcode || '(빈 칸)') };
+  if (!name) return { error: '상품 이름을 입력해 주세요.' };
+  if (!Number.isInteger(par) || par < 0) return { error: '기본 재고는 0 이상의 정수여야 해요.' };
+  if (!Number.isInteger(low) || low < 0) return { error: '부족 기준은 0 이상의 정수여야 해요.' };
   return { barcode: barcode, name: name, type: type, par: par, low: low };
 }
 
@@ -303,16 +304,16 @@ function demoApi(db, req, today, now) {
   if (req.action === 'addProduct') {
     const c = checkProduct(req);
     if (c.error) return fail(c.error);
-    if (db.products.some(p => p.barcode === c.barcode)) return fail('This barcode is already in Products.', 'exists');
+    if (db.products.some(p => p.barcode === c.barcode)) return fail('이미 등록된 바코드예요.', 'exists');
     const p = { barcode: c.barcode, name: c.name, type: c.type, par: c.par, low: c.low };
     db.products.push(p);
     return { ok: true, product: summarize(db, p, today) };
   }
-  if (req.action !== 'scan') return fail('Unknown action: ' + req.action);
+  if (req.action !== 'scan') return fail('알 수 없는 요청: ' + req.action);
   const c = checkScan(req);
   if (c.error) return fail(c.error);
   const p = db.products.find(x => x.barcode === c.barcode);
-  if (!p) return fail('Unknown barcode ' + c.barcode + '. Scan it IN to add it as a new product.', 'unknown');
+  if (!p) return fail('등록되지 않은 바코드예요 (' + c.barcode + '). Scan IN으로 스캔해서 새 상품으로 등록하세요.', 'unknown');
   let takes;
   if (c.inout === 'IN') {
     const id = nextDeliveryId(db.deliveries);
@@ -321,7 +322,7 @@ function demoApi(db, req, today, now) {
     takes = [{ id: id, qty: c.qty }];
   } else {
     const plan = planOut(db.deliveries, c.barcode, c.qty);
-    if (plan.short > 0) return fail('The sheet shows only ' + (c.qty - plan.short) + ' bottle(s) of ' + p.name + ' left. Check the Deliveries tab.', 'short');
+    if (plan.short > 0) return fail('시트에는 ' + p.name + ' 재고가 ' + (c.qty - plan.short) + '병만 남아 있어요. Deliveries 탭을 확인해 주세요.', 'short');
     for (const t of plan.takes) {
       db.deliveries.find(d => d.id === t.id).left -= t.qty;
       db.log.push([now, c.barcode, 'OUT', t.qty, '', t.id]);
@@ -416,7 +417,6 @@ const TYPE_PAR = { '증류주': 10, '청주/약주': 5, '탁주': 4, '과실주'
 const NEW_LOW = 2;          // low-stock level for a new product
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const clone = o => JSON.parse(JSON.stringify(o));
 const store = {
@@ -456,11 +456,11 @@ async function api(req) {
       : await fetch(S.url, { method: 'POST', body: JSON.stringify(req), signal: ctl.signal });
     const text = await res.text();
     try { return JSON.parse(text); } catch (e) {
-      return { ok: false, error: 'The link answered, but not with sheet data. Check that it ends in /exec and that the web app is shared with "Anyone".' };
+      return { ok: false, error: '주소가 응답했지만 시트 데이터가 아니에요. 주소가 /exec로 끝나는지, 웹 앱 액세스 권한이 "모든 사용자"인지 확인해 주세요.' };
     }
   } catch (e) {
-    const saved = req.action === 'products' ? '' : ' Not saved.';
-    return { ok: false, offline: true, error: (e.name === 'AbortError' ? 'The sheet took too long to answer.' : 'Could not reach the sheet.') + saved };
+    const saved = req.action === 'products' ? '' : ' 저장되지 않았어요.';
+    return { ok: false, offline: true, error: (e.name === 'AbortError' ? '시트 응답이 너무 늦어요.' : '시트에 연결할 수 없어요.') + saved };
   } finally { clearTimeout(timer); }
 }
 
@@ -499,7 +499,7 @@ async function send(req) {
   const p = S.products.get(req.barcode);
   const sign = req.inout === 'IN' ? '+' : '−';
   setCard('', '<div class="res"><div class="delta">' + sign + req.qty + '</div><div><div class="name">' +
-    esc(p ? p.name : req.barcode) + '</div><div class="sub">Saving…</div></div></div>');
+    esc(p ? p.name : req.barcode) + '</div><div class="sub">저장 중…</div></div></div>');
   const r = await api(req);
   S.busy = false;
   if (!r.ok) {
@@ -522,8 +522,8 @@ function batchNotes(r) {
   for (const b of r.batches) {
     if (b.days == null || b.days === '') continue;
     const d = Number(b.days);
-    if (d < 0) { notes.push('Delivery ' + b.id + ' expired ' + plural(-d, 'day') + ' ago. Check the shelf.'); level = 'bad'; }
-    else if (d <= SOON_DAYS) { notes.push('Delivery ' + b.id + ' expires ' + (d === 0 ? 'today' : 'in ' + plural(d, 'day')) + '.'); if (level !== 'bad') level = 'warn'; }
+    if (d < 0) { notes.push('입고분 ' + b.id + '의 유통기한이 ' + (-d) + '일 지났어요. 진열대를 확인해 주세요.'); level = 'bad'; }
+    else if (d <= SOON_DAYS) { notes.push('입고분 ' + b.id + '의 유통기한이 ' + (d === 0 ? '오늘까지예요.' : d + '일 남았어요.')); if (level !== 'bad') level = 'warn'; }
   }
   return { notes: notes, level: level };
 }
@@ -533,18 +533,18 @@ function showDone(r) {
   let sub;
   if (r.inout === 'IN') {
     const b = r.batches[0];
-    sub = 'Saved as delivery ' + esc(b.id) + (b.expiry ? ' · expires ' + esc(b.expiry) : ' · no expiry date') + '<br>' + plural(p.stock, 'bottle') + ' in stock now';
+    sub = '입고 ' + esc(b.id) + '로 저장 · ' + (b.expiry ? '유통기한 ' + esc(b.expiry) : '유통기한 없음') + '<br>지금 재고 ' + p.stock + '병';
   } else {
-    sub = plural(p.stock, 'bottle') + ' left' + (p.status !== 'LOW' ? ''
-      : p.order > 0 ? ' · <b>LOW stock</b>: order ' + p.order + ' to get back to ' + p.par
-      : ' · <b>LOW stock</b> (at or below ' + p.low + ')');
+    sub = p.stock + '병 남음' + (p.status !== 'LOW' ? ''
+      : p.order > 0 ? ' · <b>재고 부족</b>: ' + p.order + '병 주문하면 기본 재고 ' + p.par + '병'
+      : ' · <b>재고 부족</b> (' + p.low + '병 이하)');
   }
   setCard(n.level, '<div class="res"><div class="delta">' + (r.inout === 'IN' ? '+' : '−') + r.qty + '</div><div><div class="name">' +
     esc(p.name) + '</div><div class="sub">' + sub + '</div></div></div>' + n.notes.map(t => '<p class="note">' + esc(t) + '</p>').join(''));
 }
 
 function showError(msg, canRetry) {
-  setCard('bad', '<p class="msg">' + esc(msg) + '</p>' + (canRetry ? '<button class="primary" id="retry" type="button">Try again</button>' : ''));
+  setCard('bad', '<p class="msg">' + esc(msg) + '</p>' + (canRetry ? '<button class="primary" id="retry" type="button">다시 시도</button>' : ''));
   if (canRetry) $('#retry').onclick = () => send(S.lastReq);
 }
 
@@ -552,8 +552,8 @@ function setCard(cls, html) { const c = $('#card'); c.className = 'card ' + cls;
 function showIdle() {
   S.form = false;
   setCard('idle', '<p>' + (S.mode === 'OUT'
-    ? 'Scan a bottle when it goes to a table. Each scan takes 1 bottle off, from the oldest delivery first.'
-    : 'Scan one bottle of each product in the delivery, then type how many came and the expiry date.') + '</p>');
+    ? '병이 테이블로 나갈 때 스캔하세요. 스캔 1번에 1병이 빠지고, 가장 오래된 입고분부터 빠져요.'
+    : '들어온 상품마다 한 병만 스캔하고, 들어온 병 수와 유통기한을 입력하세요.') + '</p>');
 }
 
 // ---------- IN form (and new product form) ----------
@@ -564,27 +564,27 @@ function openInForm(code, p) {
   const startQty = p && p.order > 0 ? p.order : 1;  // what it takes to get back to the par level
   setCard('', '<form class="form" id="inForm" novalidate>' +
     (isNew
-      ? '<h3>New product</h3><div class="meta">Barcode ' + esc(code) + ' is not in Products yet. Add it once.</div>' +
-        '<label for="fName">Product name</label><input id="fName" type="text" autocomplete="off">' +
-        '<label for="fType">Type</label><input id="fType" type="text" list="types" placeholder="탁주">' +
-        '<div class="two"><div><label for="fPar">Par level</label><input id="fPar" type="number" inputmode="numeric" min="0" value=""></div>' +
-        '<div><label for="fLow">Low-stock level</label><input id="fLow" type="number" inputmode="numeric" min="0" value="' + NEW_LOW + '"></div></div>'
-      : '<h3>' + esc(p.name) + '</h3><div class="meta">' + esc(p.type || 'No type') + ' · ' + plural(p.stock, 'bottle') + ' in stock now' +
-        (p.par > 0 ? ' · par level ' + p.par : '') + '</div>') +
-    '<label for="fQty">Bottles in this delivery</label>' +
-    '<div class="stepper"><button type="button" data-step="-1" aria-label="One less">−</button>' +
+      ? '<h3>새 상품</h3><div class="meta">바코드 ' + esc(code) + '는 아직 등록되지 않았어요. 한 번만 등록하면 돼요.</div>' +
+        '<label for="fName">상품 이름</label><input id="fName" type="text" autocomplete="off">' +
+        '<label for="fType">종류</label><input id="fType" type="text" list="types" placeholder="탁주">' +
+        '<div class="two"><div><label for="fPar">기본 재고</label><input id="fPar" type="number" inputmode="numeric" min="0" value=""></div>' +
+        '<div><label for="fLow">부족 기준</label><input id="fLow" type="number" inputmode="numeric" min="0" value="' + NEW_LOW + '"></div></div>'
+      : '<h3>' + esc(p.name) + '</h3><div class="meta">' + esc(p.type || '종류 없음') + ' · 지금 재고 ' + p.stock + '병' +
+        (p.par > 0 ? ' · 기본 재고 ' + p.par + '병' : '') + '</div>') +
+    '<label for="fQty">들어온 병 수</label>' +
+    '<div class="stepper"><button type="button" data-step="-1" aria-label="하나 빼기">−</button>' +
     '<input id="fQty" type="number" inputmode="numeric" min="1" max="999" value="' + startQty + '">' +
-    '<button type="button" data-step="1" aria-label="One more">+</button></div>' +
+    '<button type="button" data-step="1" aria-label="하나 더하기">+</button></div>' +
     '<div class="presets">' + [2, 4, 6, 12].map(n => '<button type="button" data-set="' + n + '">' + n + '</button>').join('') + '</div>' +
-    '<label for="fExp">Expiry date</label><input id="fExp" type="date"' + (noExp ? ' disabled' : '') + '>' +
-    '<label class="check"><input id="fNoExp" type="checkbox"' + (noExp ? ' checked' : '') + '> No expiry date (e.g. 증류주)</label>' +
+    '<label for="fExp">유통기한</label><input id="fExp" type="date"' + (noExp ? ' disabled' : '') + '>' +
+    '<label class="check"><input id="fNoExp" type="checkbox"' + (noExp ? ' checked' : '') + '> 유통기한 없음 (예: 증류주)</label>' +
     '<p class="err" id="fErr" hidden></p>' +
-    '<div class="row"><button class="primary" id="fSave" type="submit">Save delivery</button>' +
-    '<button class="ghost" id="fCancel" type="button">Cancel</button></div></form>');
+    '<div class="row"><button class="primary" id="fSave" type="submit">입고 저장</button>' +
+    '<button class="ghost" id="fCancel" type="button">취소</button></div></form>');
 
   const f = $('#inForm'), qty = $('#fQty'), exp = $('#fExp'), noE = $('#fNoExp'), save = $('#fSave'), err = $('#fErr');
   let pastOk = false;
-  const label = () => { const n = Number(qty.value); save.textContent = Number.isInteger(n) && n > 0 ? 'Save delivery: +' + n : 'Save delivery'; };
+  const label = () => { const n = Number(qty.value); save.textContent = Number.isInteger(n) && n > 0 ? '입고 저장: +' + n : '입고 저장'; };
   const showErr = t => { err.textContent = t; err.hidden = false; };
   f.querySelectorAll('[data-step]').forEach(b => b.onclick = () => { qty.value = Math.max(1, (Number(qty.value) || 0) + Number(b.dataset.step)); label(); });
   f.querySelectorAll('[data-set]').forEach(b => b.onclick = () => { qty.value = b.dataset.set; label(); });
@@ -607,15 +607,15 @@ function openInForm(code, p) {
     if (S.busy) return;
     err.hidden = true;
     const n = Number(qty.value);
-    if (!Number.isInteger(n) || n < 1 || n > 999) return showErr('Bottles must be a whole number from 1 to 999.');
-    if (!noE.checked && !exp.value) return showErr('Pick the expiry date, or tick "No expiry date".');
-    if (exp.value && exp.value < localISO(new Date()) && !pastOk) { pastOk = true; return showErr('That date has already passed. Check it, or tap Save again to keep it.'); }
+    if (!Number.isInteger(n) || n < 1 || n > 999) return showErr('병 수는 1~999 사이의 정수로 넣어 주세요.');
+    if (!noE.checked && !exp.value) return showErr('유통기한을 고르거나 "유통기한 없음"에 체크해 주세요.');
+    if (exp.value && exp.value < localISO(new Date()) && !pastOk) { pastOk = true; return showErr('이미 지난 날짜예요. 확인해 보고, 맞으면 저장을 한 번 더 누르세요.'); }
     if (isNew) {
       const req = { action: 'addProduct', barcode: code, name: $('#fName').value, type: $('#fType').value,
         par: $('#fPar').value, low: $('#fLow').value };
       const c = checkProduct(req);
       if (c.error) return showErr(c.error);
-      S.busy = true; save.disabled = true; save.textContent = 'Adding product…';
+      S.busy = true; save.disabled = true; save.textContent = '상품 등록 중…';
       const r = await api(req);
       S.busy = false; save.disabled = false; label();
       if (!r.ok) return showErr(r.error);
@@ -630,23 +630,23 @@ function openInForm(code, p) {
 // ---------- lists ----------
 function renderStock(flashCode) {
   const ul = $('#stock');
-  if (!S.products.size) { ul.innerHTML = '<li><span class="empty">No products yet. Scan IN a bottle to add one.</span></li>'; return; }
+  if (!S.products.size) { ul.innerHTML = '<li><span class="empty">아직 상품이 없어요. Scan IN으로 한 병을 스캔해서 등록하세요.</span></li>'; return; }
   ul.innerHTML = [...S.products.values()].map(p => {
-    const chips = (p.status === 'LOW' ? '<span class="chip red">LOW</span>' : '') +
-      (p.soon > 0 ? '<span class="chip amber">' + p.soon + ' expire within 7 days</span>' : '') +
-      (p.expired > 0 ? '<span class="chip red">' + p.expired + ' expired</span>' : '');
+    const chips = (p.status === 'LOW' ? '<span class="chip red">재고 부족</span>' : '') +
+      (p.soon > 0 ? '<span class="chip amber">' + p.soon + '병 7일 안에 만료</span>' : '') +
+      (p.expired > 0 ? '<span class="chip red">' + p.expired + '병 만료</span>' : '');
     const cls = [p.barcode === flashCode ? 'flash' : '', p.status === 'LOW' ? 'low' : ''].filter(Boolean).join(' ');
     const fill = p.par > 0 ? Math.min(1, Math.max(0, p.stock / p.par)) : 0;
     return '<li data-code="' + esc(p.barcode) + '"' + (cls ? ' class="' + cls + '"' : '') + '>' +
       '<div class="pn">' + esc(p.name) + '<span class="ty">' + esc(p.type) + '</span></div>' +
       (p.par > 0 ? '<div class="gauge" aria-hidden="true"><i style="--f:' + fill.toFixed(3) + '"></i></div>' : '') +
-      '<div class="num">' + p.stock + '<small>' + (p.par > 0 ? 'of ' + p.par : 'bottles') + '</small></div><div class="chips">' + chips + '</div></li>';
+      '<div class="num">' + p.stock + '<small>' + (p.par > 0 ? '기본 ' + p.par : '병') + '</small></div><div class="chips">' + chips + '</div></li>';
   }).join('');
 }
 
 function renderPick() {
   const sel = $('#pick');
-  sel.innerHTML = '<option value="">Or pick a product…</option>' +
+  sel.innerHTML = '<option value="">또는 목록에서 상품 고르기…</option>' +
     [...S.products.values()].map(p => '<option value="' + esc(p.barcode) + '">' + esc(p.name) + ' (' + p.stock + ')</option>').join('');
 }
 
@@ -656,12 +656,12 @@ function addRecent(r) {
   S.recent = S.recent.slice(0, 15);
   $('#recent').innerHTML = S.recent.map(x => {
     const days = x.r.batches.map(b => (b.days == null || b.days === '' ? null : Number(b.days))).filter(d => d != null);
-    const chip = (days.some(d => d < 0) ? '<span class="chip red">expired batch</span>' : '') +
-      (days.some(d => d >= 0 && d <= SOON_DAYS) ? '<span class="chip amber">expires soon</span>' : '') +
-      (x.r.inout === 'OUT' && x.r.product.status === 'LOW' ? '<span class="chip red">LOW</span>' : '');
+    const chip = (days.some(d => d < 0) ? '<span class="chip red">만료된 입고분</span>' : '') +
+      (days.some(d => d >= 0 && d <= SOON_DAYS) ? '<span class="chip amber">곧 만료</span>' : '') +
+      (x.r.inout === 'OUT' && x.r.product.status === 'LOW' ? '<span class="chip red">재고 부족</span>' : '');
     return '<li><div class="pn">' + (x.r.inout === 'IN' ? '+' : '−') + x.r.qty + ' ' + esc(x.r.product.name) +
       '<span class="ty">' + x.time + ' · ' + x.r.batches.map(b => esc(b.id)).join(', ') + '</span></div>' +
-      '<div class="num">' + x.r.product.stock + '<small>left</small></div><div class="chips">' + chip + '</div></li>';
+      '<div class="num">' + x.r.product.stock + '<small>남음</small></div><div class="chips">' + chip + '</div></li>';
   }).join('');
 }
 
@@ -671,15 +671,15 @@ function setMode(m) {
   document.body.className = m === 'IN' ? 'in' : 'out';
   $('#tabIn').setAttribute('aria-selected', String(m === 'IN'));
   $('#tabOut').setAttribute('aria-selected', String(m === 'OUT'));
-  $('#camTag').textContent = m === 'IN' ? 'IN · then type bottles and date' : 'OUT · 1 bottle per scan';
+  $('#camTag').textContent = m === 'IN' ? 'IN · 스캔 후 병 수와 유통기한 입력' : 'OUT · 스캔 1번에 1병';
   S.last = { code: '', t: 0 };
   showIdle();
 }
 function renderBadge() {
   const b = $('#badge');
-  b.textContent = S.url ? 'Google Sheet' : 'Demo data';
+  b.textContent = S.url ? '구글 시트' : '데모 데이터';
   b.className = 'badge ' + (S.url ? 'sheet' : 'demo');
-  $('#stockTitle').textContent = S.url ? 'Stock now · sheet' : 'Stock now · demo';
+  $('#stockTitle').textContent = S.url ? '현재 재고 · 시트' : '현재 재고 · 데모';
 }
 function openSettings() {
   $('#urlInput').value = S.url;
@@ -688,13 +688,13 @@ function openSettings() {
 }
 async function saveUrl() {
   const v = $('#urlInput').value.trim(), msg = $('#setMsg');
-  if (v && !/^(https:\/\/|http:\/\/(localhost|127\.0\.0\.1)[:/])/.test(v)) { msg.className = 'bad'; msg.textContent = 'The link must start with https://'; return; }
+  if (v && !/^(https:\/\/|http:\/\/(localhost|127\.0\.0\.1)[:/])/.test(v)) { msg.className = 'bad'; msg.textContent = '주소는 https://로 시작해야 해요.'; return; }
   S.url = v; store.set('url', v); renderBadge();
-  msg.className = ''; msg.textContent = v ? 'Testing the link…' : 'Using demo data.';
+  msg.className = ''; msg.textContent = v ? '연결 확인 중…' : '데모 데이터를 써요.';
   const r = await loadProducts();
   if (!v) return;
   msg.className = r.ok ? 'good' : 'bad';
-  msg.textContent = r.ok ? 'Connected. ' + plural(r.products.length, 'product') + ' found in the sheet.' : r.error;
+  msg.textContent = r.ok ? '연결됐어요. 시트에서 상품 ' + r.products.length + '개를 찾았어요.' : r.error;
 }
 
 // ---------- camera ----------
@@ -713,18 +713,18 @@ function loadLib() {
 function camMsg(text, bad) { const p = $('#camMsg'); p.textContent = text; p.className = bad ? 'bad' : ''; $('#camIdle').hidden = false; }
 function cameraError(e) {
   const s = String(e && (e.name || '') + ' ' + (e.message || e));
-  if (/NotAllowed|Permission/i.test(s)) return 'Camera permission is blocked. Allow the camera for this site in the browser settings, then tap Start camera.';
-  if (/NotFound|Requested device/i.test(s)) return 'No camera found on this device. Type the barcode below instead.';
-  if (/NotReadable|in use/i.test(s)) return 'Another app is using the camera. Close it and try again.';
-  return 'The camera did not start (' + s.trim().slice(0, 80) + '). Type the barcode below instead.';
+  if (/NotAllowed|Permission/i.test(s)) return '카메라 권한이 막혀 있어요. 브라우저 설정에서 이 사이트의 카메라를 허용한 뒤 카메라 켜기를 누르세요.';
+  if (/NotFound|Requested device/i.test(s)) return '이 기기에서 카메라를 찾지 못했어요. 아래에 바코드 번호를 입력하세요.';
+  if (/NotReadable|in use/i.test(s)) return '다른 앱이 카메라를 쓰고 있어요. 그 앱을 닫고 다시 시도하세요.';
+  return '카메라가 켜지지 않았어요 (' + s.trim().slice(0, 80) + '). 아래에 바코드 번호를 입력하세요.';
 }
 async function startCamera() {
   unlockAudio();
   if (S.camOn) return;
-  if (!window.isSecureContext) return camMsg('The camera only works on an https:// page. Open the page from its GitHub Pages link.', true);
-  $('#camBtn').disabled = true; camMsg('Starting the camera…');
+  if (!window.isSecureContext) return camMsg('카메라는 https:// 주소에서만 켜져요. GitHub Pages 주소로 열어 주세요.', true);
+  $('#camBtn').disabled = true; camMsg('카메라를 켜는 중…');
   try {
-    const L = await loadLib().catch(() => { throw new Error('The camera scanner could not load. Check the internet, or type the barcode below.'); });
+    const L = await loadLib().catch(() => { throw new Error('바코드 스캐너를 불러오지 못했어요. 인터넷을 확인하거나 아래에 바코드 번호를 입력하세요.'); });
     if (!S.cam) {
       const F = L.Html5QrcodeSupportedFormats;
       S.cam = new L.Html5Qrcode('reader', { formatsToSupport: [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E], useBarCodeDetectorIfSupported: true, verbose: false });
@@ -742,7 +742,7 @@ async function stopCamera() {
   if (!S.camOn) return;
   S.camOn = false;
   try { await S.cam.stop(); } catch (e) { /* already stopped */ }
-  camMsg('Camera paused.');
+  camMsg('카메라를 잠시 멈췄어요.');
 }
 function unlockAudio() {
   try {
@@ -771,10 +771,10 @@ $('#badge').onclick = openSettings;
 $('#openSettings').onclick = openSettings;
 $('#saveUrl').onclick = saveUrl;
 $('#resetDemo').onclick = () => {
-  if (!confirm('Put the demo data back to the start? Your demo scans will be cleared.')) return;
+  if (!confirm('데모 데이터를 처음 상태로 되돌릴까요? 데모에서 한 스캔은 지워져요.')) return;
   demoDb = clone(DEMO_SEED); store.set('demo', demoDb);
   if (!S.url) loadProducts();
-  $('#setMsg').className = 'good'; $('#setMsg').textContent = 'Demo data reset.';
+  $('#setMsg').className = 'good'; $('#setMsg').textContent = '데모 데이터를 되돌렸어요.';
 };
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { if (S.camOn) { S.resume = true; stopCamera(); } }
@@ -783,7 +783,7 @@ document.addEventListener('visibilitychange', () => {
 
 setMode(S.mode);
 renderBadge();
-loadProducts().then(r => { if (!r.ok) showError('Could not load products: ' + r.error, false); });
+loadProducts().then(r => { if (!r.ok) showError('상품 목록을 불러오지 못했어요: ' + r.error, false); });
 loadLib().catch(() => {});
 </script>
 </body>
