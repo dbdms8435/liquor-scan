@@ -196,7 +196,7 @@ dialog hr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }
       <button class="ghost" value="close">Close</button>
     </div>
     <hr>
-    <p class="hint">Demo data: 22 products and 24 deliveries with fake stock, the same as the sample sheet.</p>
+    <p class="hint">Demo data: 22 products and 44 deliveries with fake stock, the same as the sample sheet.</p>
     <button class="ghost" id="resetDemo" type="button">Reset demo data</button>
   </form>
 </dialog>
@@ -302,16 +302,16 @@ function demoApi(db, req, today, now) {
       return { id: t.id, qty: t.qty, expiry: d.expiry, days: daysLeft(d.expiry, today), status: batchStatus(d.left, d.expiry, today) };
     }) };
 }
-// Same fake data as Sample_Stock_Sheet.xlsx (bottles left after the nights of Nov 13-15).
+// Same fake data as Sample_Stock_Sheet.xlsx (bottles left after the closing scans of Nov 17-23).
 const DEMO_SEED = {
   products: [
-    { barcode: '8809742740500', name: '서울의 밤', type: '증류주', par: 6, low: 2 },
-    { barcode: '8801507196317', name: '도원결의', type: '증류주', par: 6, low: 2 },
-    { barcode: '8802605080843', name: '황금보리17', type: '증류주', par: 6, low: 2 },
-    { barcode: '8800253576411', name: '만월24', type: '증류주', par: 6, low: 2 },
-    { barcode: '8806582970104', name: '겨울지나35', type: '증류주', par: 6, low: 2 },
-    { barcode: '8804801058817', name: '황진이', type: '청주/약주', par: 5, low: 2 },
-    { barcode: '8801978408438', name: '솔송주', type: '청주/약주', par: 5, low: 2 },
+    { barcode: '8809742740500', name: '서울의 밤', type: '증류주', par: 10, low: 2 },
+    { barcode: '8801507196317', name: '도원결의', type: '증류주', par: 10, low: 2 },
+    { barcode: '8802605080843', name: '황금보리17', type: '증류주', par: 10, low: 2 },
+    { barcode: '8800253576411', name: '만월24', type: '증류주', par: 10, low: 2 },
+    { barcode: '8806582970104', name: '겨울지나35', type: '증류주', par: 10, low: 2 },
+    { barcode: '8804801058817', name: '황진이', type: '청주/약주', par: 8, low: 2 },
+    { barcode: '8801978408438', name: '솔송주', type: '청주/약주', par: 3, low: 2 },
     { barcode: '8807537172758', name: '서설', type: '청주/약주', par: 5, low: 2 },
     { barcode: '8801294847430', name: '김포예주 프리미엄', type: '청주/약주', par: 5, low: 2 },
     { barcode: '8807941322671', name: '일엽편주', type: '청주/약주', par: 5, low: 2 },
@@ -329,30 +329,50 @@ const DEMO_SEED = {
     { barcode: '8801923452189', name: '야마와 준마이 다이긴죠', type: '사케', par: 4, low: 2 },
   ],
   deliveries: [
-    { id: 'D001', dateIn: '2026-10-26', barcode: '8806994582285', expiry: '2026-11-12', qtyIn: 4, left: 1 },
-    { id: 'D002', dateIn: '2026-10-26', barcode: '8801978408438', expiry: '2026-11-22', qtyIn: 3, left: 1 },
-    { id: 'D003', dateIn: '2026-10-26', barcode: '8807537172758', expiry: '2027-04-30', qtyIn: 5, left: 3 },
-    { id: 'D004', dateIn: '2026-10-26', barcode: '8804801058817', expiry: '2027-05-15', qtyIn: 5, left: 3 },
-    { id: 'D005', dateIn: '2026-10-26', barcode: '8800533234376', expiry: '2027-10-01', qtyIn: 4, left: 2 },
-    { id: 'D006', dateIn: '2026-10-26', barcode: '8800855315418', expiry: '2027-12-31', qtyIn: 6, left: 4 },
-    { id: 'D007', dateIn: '2026-11-02', barcode: '8801507196317', expiry: '', qtyIn: 6, left: 4 },
-    { id: 'D008', dateIn: '2026-11-02', barcode: '8802605080843', expiry: '', qtyIn: 6, left: 3 },
-    { id: 'D009', dateIn: '2026-11-02', barcode: '8800253576411', expiry: '', qtyIn: 6, left: 5 },
-    { id: 'D010', dateIn: '2026-11-02', barcode: '8806582970104', expiry: '', qtyIn: 6, left: 5 },
-    { id: 'D011', dateIn: '2026-11-02', barcode: '8801294847430', expiry: '2027-05-20', qtyIn: 5, left: 3 },
-    { id: 'D012', dateIn: '2026-11-02', barcode: '8807941322671', expiry: '2027-06-01', qtyIn: 5, left: 4 },
-    { id: 'D013', dateIn: '2026-11-02', barcode: '8809551480543', expiry: '2028-01-31', qtyIn: 6, left: 3 },
-    { id: 'D014', dateIn: '2026-11-02', barcode: '8802488305309', expiry: '2027-11-30', qtyIn: 6, left: 5 },
-    { id: 'D015', dateIn: '2026-11-02', barcode: '8802891220374', expiry: '2027-10-31', qtyIn: 6, left: 5 },
-    { id: 'D016', dateIn: '2026-11-02', barcode: '8803430087991', expiry: '2027-09-30', qtyIn: 4, left: 3 },
-    { id: 'D017', dateIn: '2026-11-02', barcode: '8806454716205', expiry: '2027-08-31', qtyIn: 4, left: 3 },
-    { id: 'D018', dateIn: '2026-11-02', barcode: '8801923452189', expiry: '2027-10-15', qtyIn: 4, left: 3 },
-    { id: 'D019', dateIn: '2026-11-09', barcode: '8809742740500', expiry: '', qtyIn: 6, left: 2 },
-    { id: 'D020', dateIn: '2026-11-09', barcode: '8801978408438', expiry: '2027-05-31', qtyIn: 2, left: 2 },
-    { id: 'D021', dateIn: '2026-11-09', barcode: '8809434168414', expiry: '2026-11-30', qtyIn: 4, left: 3 },
-    { id: 'D022', dateIn: '2026-11-09', barcode: '8803711333175', expiry: '2026-11-21', qtyIn: 4, left: 3 },
-    { id: 'D023', dateIn: '2026-11-09', barcode: '8808510228257', expiry: '2026-12-05', qtyIn: 4, left: 1 },
-    { id: 'D024', dateIn: '2026-11-12', barcode: '8806994582285', expiry: '2026-11-23', qtyIn: 3, left: 3 },
+    { id: 'D001', dateIn: '2026-10-26', barcode: '8804801058817', expiry: '2027-05-15', qtyIn: 7, left: 0 },
+    { id: 'D002', dateIn: '2026-10-26', barcode: '8801978408438', expiry: '2026-11-22', qtyIn: 1, left: 0 },
+    { id: 'D003', dateIn: '2026-10-26', barcode: '8807537172758', expiry: '2027-04-30', qtyIn: 5, left: 5 },
+    { id: 'D004', dateIn: '2026-10-26', barcode: '8800855315418', expiry: '2027-12-31', qtyIn: 5, left: 3 },
+    { id: 'D005', dateIn: '2026-10-26', barcode: '8800533234376', expiry: '2027-10-01', qtyIn: 3, left: 0 },
+    { id: 'D006', dateIn: '2026-11-02', barcode: '8801507196317', expiry: '', qtyIn: 8, left: 3 },
+    { id: 'D007', dateIn: '2026-11-02', barcode: '8802605080843', expiry: '', qtyIn: 10, left: 8 },
+    { id: 'D008', dateIn: '2026-11-02', barcode: '8800253576411', expiry: '', qtyIn: 7, left: 3 },
+    { id: 'D009', dateIn: '2026-11-02', barcode: '8806582970104', expiry: '', qtyIn: 6, left: 4 },
+    { id: 'D010', dateIn: '2026-11-02', barcode: '8801294847430', expiry: '2027-05-20', qtyIn: 4, left: 1 },
+    { id: 'D011', dateIn: '2026-11-02', barcode: '8807941322671', expiry: '2027-06-01', qtyIn: 5, left: 0 },
+    { id: 'D012', dateIn: '2026-11-02', barcode: '8809551480543', expiry: '2028-01-31', qtyIn: 5, left: 0 },
+    { id: 'D013', dateIn: '2026-11-02', barcode: '8802488305309', expiry: '2027-11-30', qtyIn: 6, left: 5 },
+    { id: 'D014', dateIn: '2026-11-02', barcode: '8802891220374', expiry: '2027-10-31', qtyIn: 5, left: 1 },
+    { id: 'D015', dateIn: '2026-11-02', barcode: '8803430087991', expiry: '2027-09-30', qtyIn: 4, left: 2 },
+    { id: 'D016', dateIn: '2026-11-02', barcode: '8806454716205', expiry: '2027-08-31', qtyIn: 3, left: 3 },
+    { id: 'D017', dateIn: '2026-11-02', barcode: '8801923452189', expiry: '2027-10-15', qtyIn: 4, left: 1 },
+    { id: 'D018', dateIn: '2026-11-09', barcode: '8809742740500', expiry: '', qtyIn: 9, left: 1 },
+    { id: 'D019', dateIn: '2026-11-09', barcode: '8801978408438', expiry: '2027-05-31', qtyIn: 2, left: 2 },
+    { id: 'D020', dateIn: '2026-11-09', barcode: '8809434168414', expiry: '2026-11-30', qtyIn: 3, left: 1 },
+    { id: 'D021', dateIn: '2026-11-09', barcode: '8803711333175', expiry: '2026-11-21', qtyIn: 4, left: 1 },
+    { id: 'D022', dateIn: '2026-11-09', barcode: '8808510228257', expiry: '2026-12-05', qtyIn: 2, left: 0 },
+    { id: 'D023', dateIn: '2026-11-12', barcode: '8806994582285', expiry: '2026-11-23', qtyIn: 3, left: 0 },
+    { id: 'D024', dateIn: '2026-11-18', barcode: '8809742740500', expiry: '', qtyIn: 4, left: 4 },
+    { id: 'D025', dateIn: '2026-11-18', barcode: '8806582970104', expiry: '', qtyIn: 5, left: 5 },
+    { id: 'D026', dateIn: '2026-11-18', barcode: '8804801058817', expiry: '2027-05-17', qtyIn: 4, left: 0 },
+    { id: 'D027', dateIn: '2026-11-18', barcode: '8806994582285', expiry: '2026-12-06', qtyIn: 3, left: 0 },
+    { id: 'D028', dateIn: '2026-11-18', barcode: '8808510228257', expiry: '2026-12-06', qtyIn: 2, left: 0 },
+    { id: 'D029', dateIn: '2026-11-19', barcode: '8807941322671', expiry: '2027-05-18', qtyIn: 3, left: 2 },
+    { id: 'D030', dateIn: '2026-11-19', barcode: '8800533234376', expiry: '2027-09-15', qtyIn: 2, left: 1 },
+    { id: 'D031', dateIn: '2026-11-20', barcode: '8801507196317', expiry: '', qtyIn: 5, left: 5 },
+    { id: 'D032', dateIn: '2026-11-20', barcode: '8800253576411', expiry: '', qtyIn: 4, left: 4 },
+    { id: 'D033', dateIn: '2026-11-20', barcode: '8804801058817', expiry: '2027-05-19', qtyIn: 4, left: 4 },
+    { id: 'D034', dateIn: '2026-11-20', barcode: '8806994582285', expiry: '2026-12-08', qtyIn: 4, left: 3 },
+    { id: 'D035', dateIn: '2026-11-20', barcode: '8809434168414', expiry: '2026-12-08', qtyIn: 2, left: 2 },
+    { id: 'D036', dateIn: '2026-11-20', barcode: '8808510228257', expiry: '2026-12-08', qtyIn: 2, left: 2 },
+    { id: 'D037', dateIn: '2026-11-23', barcode: '8803711333175', expiry: '2026-12-11', qtyIn: 3, left: 3 },
+    { id: 'D038', dateIn: '2026-11-23', barcode: '8809551480543', expiry: '2028-05-16', qtyIn: 5, left: 5 },
+    { id: 'D039', dateIn: '2026-11-23', barcode: '8802891220374', expiry: '2028-05-16', qtyIn: 5, left: 5 },
+    { id: 'D040', dateIn: '2026-11-23', barcode: '8801923452189', expiry: '2027-09-19', qtyIn: 3, left: 3 },
+    { id: 'D041', dateIn: '2026-11-23', barcode: '8801978408438', expiry: '2027-05-22', qtyIn: 1, left: 1 },
+    { id: 'D042', dateIn: '2026-11-23', barcode: '8801294847430', expiry: '2027-05-22', qtyIn: 4, left: 4 },
+    { id: 'D043', dateIn: '2026-11-23', barcode: '8807941322671', expiry: '2027-05-22', qtyIn: 3, left: 3 },
+    { id: 'D044', dateIn: '2026-11-23', barcode: '8800533234376', expiry: '2027-09-19', qtyIn: 3, left: 3 },
   ],
   log: [],
 };
@@ -360,7 +380,7 @@ const DEMO_SEED = {
 
 const LIB_URL = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
 const COOLDOWN_MS = 2500;   // the same barcode seen again within this time is ignored (camera reads ~10 times a second)
-const TYPE_PAR = { '증류주': 6, '청주/약주': 5, '탁주': 4, '과실주': 6, '사케': 4 };  // par level for a new product, by type
+const TYPE_PAR = { '증류주': 10, '청주/약주': 5, '탁주': 4, '과실주': 6, '사케': 4 };  // par level for a new product, by type (change it per product in the form)
 const NEW_LOW = 2;          // low-stock level for a new product
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
